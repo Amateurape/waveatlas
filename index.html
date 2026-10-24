@@ -1,0 +1,521 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="description" content="观澜音频浏览器 WaveAtlas — 单文件、纯本地的音频波形浏览器。浏览文件夹中所有音频的波形图，点击即播，自动识别 BPM 与情绪。无需安装，无需联网。">
+<title>观澜音频浏览器 WaveAtlas — 单文件本地音频波形浏览器</title>
+<style>
+  :root { color-scheme: dark; }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  html { scroll-behavior: smooth; }
+  body {
+    background: #0c0e14; color: #e6e8ee;
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "PingFang SC", "Microsoft YaHei", sans-serif;
+    line-height: 1.75; font-size: 16px; overflow-x: hidden;
+  }
+  .container { max-width: 1080px; margin: 0 auto; padding: 0 24px; }
+  h2 { font-size: 30px; margin-bottom: 12px; letter-spacing: .5px; }
+  .sec-sub { color: #8a93a5; margin-bottom: 40px; font-size: 15.5px; }
+  section { padding: 88px 0; }
+  .accent { color: #4f8cff; }
+
+  /* ---------- nav ---------- */
+  nav {
+    position: sticky; top: 0; z-index: 50;
+    background: rgba(12,14,20,.82); backdrop-filter: blur(12px);
+    border-bottom: 1px solid #1d2230;
+  }
+  .nav-inner { max-width: 1080px; margin: 0 auto; padding: 14px 24px; display: flex; align-items: center; gap: 28px; }
+  .logo { font-weight: 700; font-size: 17px; display: flex; align-items: center; gap: 9px; color: #fff; text-decoration: none; }
+  .logo .dot { width: 10px; height: 10px; border-radius: 50%; background: #4f8cff; box-shadow: 0 0 12px #4f8cff; }
+  nav a.link { color: #fff; text-decoration: none; font-size: 14.5px; transition: color .15s; }
+  nav a.link:hover { text-shadow: 0 0 .5px currentColor, 0 0 .5px currentColor, 0 0 1px currentColor; }
+  nav .spacer { flex: 1; }
+  .btn {
+    display: inline-flex; align-items: center; gap: 8px; text-decoration: none;
+    padding: 12px 26px; border-radius: 10px; font-size: 15.5px; font-weight: 600;
+    transition: transform .15s, box-shadow .15s, background .15s;
+  }
+  .btn-primary { background: #4f8cff; color: #fff !important; box-shadow: 0 4px 24px rgba(79,140,255,.35); }
+  .btn-primary:hover { transform: translateY(-2px); box-shadow: 0 8px 32px rgba(79,140,255,.5); background: #3d7ef5; }
+  .btn-ghost { background: transparent; color: #cfd6e4 !important; border: 1px solid #2c3444; }
+  .btn-ghost:hover { border-color: #4f8cff; color: #fff !important; }
+  .btn-sm { padding: 8px 18px; font-size: 14px; }
+  .lang-switch { display: flex; align-items: center; margin-left: 4px; padding: 3px; border: 1px solid #2c3444; border-radius: 999px; background: rgba(20,24,36,.6); }
+  .lang-switch button { background: none; border: none; padding: 2px 9px; cursor: pointer; border-radius: 999px; font-size: 12.5px; line-height: 1.55; color: #6c7689; transition: color .15s, background .15s; }
+  .lang-switch button:hover { color: #fff; }
+  .lang-switch button.active { background: #4f8cff; color: #fff; font-weight: 600; }
+
+  /* ---------- hero ---------- */
+  .hero { position: relative; padding: 110px 0 90px; overflow: hidden; }
+  #heroWave { position: absolute; inset: 0; width: 100%; height: 100%; opacity: .22; pointer-events: none; }
+  .hero-inner { position: relative; text-align: center; }
+  .hero .badge {
+    display: inline-block; font-size: 13px; color: #8fb4ff; border: 1px solid #2b3b5e;
+    background: rgba(79,140,255,.08); padding: 5px 16px; border-radius: 20px; margin-bottom: 26px;
+  }
+  .hero .badge .free {
+    color: #e8edf5; font-weight: 700; text-shadow: 0 0 10px rgba(232,237,245,.55), 0 0 22px rgba(232,237,245,.25);
+    margin-right: 3px;
+  }
+  .hero h1 { font-size: 38px; line-height: 1.3; letter-spacing: 1px; color: #fff; }
+  .hero h1 .en { display: block; font-size: 17px; font-weight: 600; color: #7d8aa5; margin-top: 8px; letter-spacing: 2.5px; }
+  .hero .tagline { font-size: 23px; color: #c3cad8; margin: 24px auto 40px; max-width: 680px; }
+  .hero .cta-row { display: flex; gap: 16px; justify-content: center; flex-wrap: wrap; }
+  .hero .hint { margin-top: 18px; font-size: 13px; color: #6c7689; }
+
+  /* ---------- steps ---------- */
+  .steps { display: grid; grid-template-columns: repeat(3, 1fr); gap: 22px; }
+  .step { background: #141824; border: 1px solid #212839; border-radius: 14px; overflow: hidden; transition: transform .2s, border-color .2s; }
+  .step:hover { transform: translateY(-4px); border-color: #34415e; }
+  .step .num { display: inline-flex; width: 30px; height: 30px; border-radius: 50%; background: rgba(79,140,255,.15); color: #6ea3ff; align-items: center; justify-content: center; font-weight: 700; font-size: 14px; margin: 20px 0 12px 20px; }
+  .step h3 { font-size: 17px; padding: 0 20px 6px; color: #fff; }
+  .step p { font-size: 14px; color: #8a93a5; padding: 0 20px 16px; }
+  .ph { background: repeating-linear-gradient(45deg,#161b28,#161b28 12px,#131722 12px,#131722 24px); border: 1.5px dashed #2c3547; display: flex; align-items: center; justify-content: center; color: #55607a; font-size: 13.5px; letter-spacing: 1px; }
+  .step .ph { height: 190px; margin: 14px 20px 20px; border-radius: 9px; }
+  .shot { display: block; width: calc(100% - 40px); height: 190px; object-fit: cover; object-position: top; border-radius: 9px; margin: 14px 20px 20px; border: 1px solid #212839; }
+
+  /* ---------- features ---------- */
+  .features { display: grid; grid-template-columns: repeat(3, 1fr); gap: 22px; }
+  .feature { background: #141824; border: 1px solid #212839; border-radius: 14px; padding: 26px 24px; transition: transform .2s, border-color .2s; }
+  .feature:hover { transform: translateY(-4px); border-color: #34415e; }
+  .feature .icon { font-size: 30px; margin-bottom: 14px; }
+  .feature h3 { font-size: 17.5px; color: #fff; margin-bottom: 10px; }
+  .feature p { font-size: 14px; color: #8a93a5; }
+
+  /* ---------- demo ---------- */
+  .demo-box { border-radius: 16px; overflow: hidden; border: 1px solid #212839; }
+  .demo-box .ph { height: 420px; border: none; }
+
+  /* ---------- specs ---------- */
+  .specs { display: grid; grid-template-columns: repeat(2, 1fr); gap: 0 60px; }
+  .spec-row { display: flex; justify-content: space-between; padding: 15px 4px; border-bottom: 1px solid #1c2231; font-size: 15px; }
+  .spec-row .k { color: #8a93a5; }
+  .spec-row .v { color: #e6e8ee; text-align: right; }
+  .fmt-chip { background: #1c2231; border: 1px solid #2c3547; border-radius: 8px; padding: 5px 16px; font-size: 13.5px; color: #cfd6e4; }
+
+  /* ---------- download ---------- */
+  .dl-card {
+    background: linear-gradient(135deg, #14203a 0%, #10131c 60%);
+    border: 1px solid #24304a; border-radius: 18px; padding: 52px 40px; text-align: center;
+  }
+  .dl-card .ver { font-size: 14px; color: #8a93a5; margin: 8px 0 30px; }
+  .dl-card .meta { margin-top: 24px; font-size: 13.5px; color: #6c7689; }
+  .dl-note { margin-top: 28px; text-align: left; background: #10141f; border: 1px solid #1e2536; border-radius: 12px; padding: 22px 26px; font-size: 14px; color: #9aa3b5; }
+  .dl-note b { color: #cfd6e4; }
+  .dl-note ol { margin: 8px 0 0 20px; }
+  .dl-note li { margin: 5px 0; }
+
+  /* ---------- faq ---------- */
+  .faq-item { border-bottom: 1px solid #1c2231; padding: 22px 4px; }
+  .faq-item h3 { font-size: 16.5px; color: #e6e8ee; margin-bottom: 8px; }
+  .faq-item p { font-size: 14.5px; color: #8a93a5; }
+
+  /* ---------- footer ---------- */
+  footer { border-top: 1px solid #1d2230; padding: 44px 0 60px; text-align: center; color: #6c7689; font-size: 13.5px; }
+  footer .fb { margin-bottom: 10px; }
+  footer a { color: #6ea3ff; text-decoration: none; }
+
+  @media (max-width: 860px) {
+    .steps, .features { grid-template-columns: 1fr; }
+    .specs { grid-template-columns: 1fr; }
+    .hero h1 { font-size: 30px; }
+    .hero .tagline { font-size: 19px; }
+    section { padding: 64px 0; }
+    nav a.link { display: none; }
+  }
+/* 截图点击放大 */
+.shot { cursor: zoom-in; transition: transform .25s ease, box-shadow .25s ease; }
+.shot:hover { transform: translateY(-2px) scale(1.01); box-shadow: 0 10px 32px rgba(0,0,0,.5); }
+.lightbox { position: fixed; inset: 0; background: rgba(5,8,15,.84); backdrop-filter: blur(6px); display: flex; align-items: center; justify-content: center; z-index: 999; cursor: zoom-out; opacity: 0; visibility: hidden; transition: opacity .25s ease, visibility .25s; }
+.lightbox.open { opacity: 1; visibility: visible; }
+.lightbox img { max-width: 92vw; max-height: 92vh; border-radius: 12px; box-shadow: 0 24px 80px rgba(0,0,0,.65); transform: scale(.96); transition: transform .25s ease; }
+.lightbox.open img { transform: scale(1); }
+.lightbox .lb-hint { position: absolute; bottom: 26px; left: 50%; transform: translateX(-50%); color: rgba(255,255,255,.55); font-size: 13px; letter-spacing: .5px; }
+/* 主题对比滑块 */
+.cmp { position: relative; margin: 14px 20px 20px; border-radius: 9px; overflow: hidden; border: 1px solid #212839; aspect-ratio: 2924 / 1608; cursor: ew-resize; user-select: none; touch-action: none; }
+.cmp img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; object-position: top; display: block; pointer-events: none; }
+.cmp-top { position: absolute; inset: 0; clip-path: inset(0 50% 0 0); }
+.cmp-divider { position: absolute; top: 0; bottom: 0; left: 50%; width: 3px; margin-left: -1.5px; background: rgba(255,255,255,.95); box-shadow: 0 0 8px rgba(0,0,0,.5); pointer-events: none; }
+.cmp-handle { position: absolute; top: 50%; left: 50%; transform: translate(-50%,-50%); width: 36px; height: 36px; border-radius: 50%; background: rgba(255,255,255,.94); color: #1a2030; display: flex; align-items: center; justify-content: center; font-size: 15px; letter-spacing: -2px; font-weight: 700; box-shadow: 0 2px 10px rgba(0,0,0,.45); pointer-events: none; }
+.cmp-label { position: absolute; top: 12px; padding: 3px 12px; border-radius: 999px; font-size: 12.5px; font-weight: 600; pointer-events: none; backdrop-filter: blur(4px); }
+.cmp-label-l { left: 12px; background: rgba(255,255,255,.85); color: #1a2030; }
+.cmp-label-r { right: 12px; background: rgba(23,28,40,.8); color: #fff; }
+/* 主题色切换器 */
+.sw-main { width: calc(100% - 40px); margin: 14px 20px 0; aspect-ratio: 2924 / 1608; object-fit: cover; object-position: top; border-radius: 9px; border: 1px solid #212839; display: block; }
+.sw-dots { display: flex; gap: 13px; justify-content: center; padding: 16px 0 0; }
+.sw-dot { width: 18px; height: 18px; border-radius: 50%; cursor: pointer; border: none; outline: 2px solid transparent; outline-offset: 2px; transition: outline-color .15s, transform .15s; padding: 0; }
+.sw-dot:hover { transform: scale(1.15); }
+.sw-dot.active { outline-color: #7fb0ff; }
+</style>
+</head>
+<body>
+
+<nav>
+  <div class="nav-inner">
+    <a class="logo" href="#"><span class="dot"></span>观澜 <span style="color:#7d8aa5;font-weight:500;">WaveAtlas</span></a>
+    <span class="spacer"></span>
+    <a class="link" href="#features" data-i18n="nav.features">功能</a>
+    <a class="link" href="#privacy" data-i18n="nav.privacy">隐私</a>
+    <a class="link" href="#download" data-i18n="nav.download">下载</a>
+    <a class="link" href="#faq" data-i18n="nav.faq">FAQ</a>
+    <div class="lang-switch" id="langSwitch" aria-label="Language">
+      <button data-lang="zh-CN" title="简体中文">简</button>
+      <button data-lang="zh-TW" title="繁體中文">繁</button>
+      <button data-lang="en" title="English">EN</button>
+      <button data-lang="ja" title="日本語">日</button>
+      <button data-lang="ko" title="한국어">한</button>
+    </div>
+    <a class="btn btn-primary btn-sm" href="WaveAtlasAudioBrowser_v3.05.html" target="_blank" data-i18n="nav.try">在线试用</a>
+  </div>
+</nav>
+
+<!-- ============ HERO ============ -->
+<header class="hero">
+  <canvas id="heroWave"></canvas>
+  <div class="container hero-inner">
+    <span class="badge" data-i18n-html="hero.badge"><span class="free">完全免费</span> · 轻量 · 无需联网 · 即开即用</span>
+    <h1><span data-i18n="hero.title">观澜音频浏览器</span><span class="en" data-i18n="hero.subtitle">WaveAtlas Audio Browser</span></h1>
+    <p class="tagline" data-i18n-html="hero.tagline">视觉化呈现文件夹中的音频文件，节奏、响度起伏一眼可读<b style="display:block;margin-top:14px;font-size:25px;">点击波形任意位置，即点即播，任意跳转</b></p>
+    <div class="cta-row">
+      <a class="btn btn-primary" href="WaveAtlasAudioBrowser_v3.05.html" target="_blank" data-i18n="hero.try">▶ 在线试用</a>
+      <a class="btn btn-ghost" href="WaveAtlasAudioBrowser_v3.05.html" download="WaveAtlasAudioBrowser_v3.05.html" data-i18n="hero.dl">⬇ 下载离线版</a>
+    </div>
+    <p class="hint" data-i18n="hero.hint">绿色无需安装 · 单文件 HTML · 约 95 KB · Chrome / Edge 86+ 直接打开</p>
+  </div>
+</header>
+
+<!-- ============ STEPS ============ -->
+<section id="how">
+  <div class="container">
+    <h2 data-i18n="steps.h2">三步上手</h2>
+    <p class="sec-sub" data-i18n="steps.sub">无需安装，不用注册，双击打开就能用。</p>
+    <div class="steps">
+      <div class="step">
+        <span class="num">1</span>
+        <h3 data-i18n="s1h">选择文件夹</h3>
+        <p data-i18n="s1p">选择一个本地文件夹，在目录树中点击单个文件夹，其下所有音频文件即在右侧排列展现。</p>
+        <img class="shot" src="images/01-select-folder.png" alt="Select Folder">
+      </div>
+      <div class="step">
+        <span class="num">2</span>
+        <h3 data-i18n="s2h">波形预览更直观</h3>
+        <p data-i18n="s2p">所有音频文件以波形图呈现，信息直观，节奏、响度起伏一目了然。</p>
+        <img class="shot" src="images/02-waveforms.png" alt="Waveform List">
+      </div>
+      <div class="step">
+        <span class="num">3</span>
+        <h3 data-i18n="s3h">点击即播</h3>
+        <p data-i18n="s3p">点击波形任意位置，直接从该处播放；点击其他文件波形，随时无缝切换播放。</p>
+        <img class="shot" src="images/03-click-to-play.png" alt="Click to Play">
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ============ THEME ============ -->
+<section id="theme">
+  <div class="container">
+    <h2 data-i18n="theme.h2">亮暗双主题 · 主题色随心换</h2>
+    <p class="sec-sub" data-i18n="theme.sub">工具外观由你定义——不用改任何配置，点两下就换。</p>
+    <div class="steps" style="grid-template-columns:1fr 1fr;">
+      <div class="step">
+        <h3 style="padding-top:16px;"><svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="#8a94ad" stroke-width="2" stroke-linecap="round" style="vertical-align:-3px;margin-right:8px;"><circle cx="12" cy="12" r="4"/><path d="M12 2v3M12 19v3M2 12h3M19 12h3M4.9 4.9l2.1 2.1M17 17l2.1 2.1M19.1 4.9L17 7M7 17l-2.1 2.1"/></svg><span data-i18n="theme.light">亮色主题</span> · <svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="#8a94ad" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-3px;margin-right:8px;"><path d="M21 12.8A9 9 0 1 1 11.2 3a7 7 0 0 0 9.8 9.8z"/></svg><span data-i18n="theme.dark">暗色主题</span></h3>
+        <p data-i18n="theme.cmp.p">两种风格一键切换，深夜看波形不刺眼，白天整理不犯困。</p>
+        <div class="cmp" id="themeCmp">
+          <img src="images/05-dark-theme.png" alt="Dark Theme">
+          <div class="cmp-top" id="cmpTop"><img src="images/04-light-theme.png" alt="Light Theme"></div>
+          <div class="cmp-divider" id="cmpDiv"><div class="cmp-handle">◄►</div></div>
+          <span class="cmp-label cmp-label-l" data-i18n="cmp.l">☀️ 亮色</span>
+          <span class="cmp-label cmp-label-r" data-i18n="cmp.r">🌙 暗色</span>
+        </div>
+        <p style="text-align:center;color:#55607a;font-size:12.5px;margin:24px 0 18px;" data-i18n="cmp.hint">◄► 左右拖动分割线，查看两种主题效果</p>
+      </div>
+      <div class="step">
+        <h3 style="padding-top:16px;"><svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="#8a94ad" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-3px;margin-right:8px;"><path d="M12 3a9 9 0 1 0 .5 18H14a2 2 0 0 0 0-4h-1a1.5 1.5 0 0 1 0-3h6a3 3 0 0 0 3-3c0-4.4-4.5-8-10-8z"/><circle cx="7.5" cy="10.5" r="1" fill="#8a94ad" stroke="none"/><circle cx="12" cy="7.5" r="1" fill="#8a94ad" stroke="none"/><circle cx="16.5" cy="10.5" r="1" fill="#8a94ad" stroke="none"/></svg><span data-i18n="theme.accent">主题色自定义</span></h3>
+        <p data-i18n="accent.p">主题色你说了算，波形、按钮、高亮一起联动换装。</p>
+        <img class="sw-main" id="accentImg" src="images/06-accent-red.png" alt="主题色效果">
+        <div style="display:flex;align-items:center;justify-content:center;flex-wrap:wrap;gap:12px;margin:30px 20px 22px;">
+          <span style="color:#55607a;font-size:12.5px;line-height:18px;" data-i18n="accent.hint">点击圆形色块，查看不同主题色效果。</span>
+          <span class="sw-dots" id="accentDots" style="display:inline-flex;align-items:center;padding:0;gap:8px;">
+            <button class="sw-dot" style="background:#4f8cff;" aria-label="蓝色主题"></button>
+            <button class="sw-dot" style="background:#9d6bff;" aria-label="紫色主题"></button>
+            <button class="sw-dot" style="background:#2fd6a3;" aria-label="绿色主题"></button>
+            <button class="sw-dot" style="background:#f5b83d;" aria-label="黄色主题"></button>
+            <button class="sw-dot" style="background:#ff8f4f;" aria-label="橙色主题"></button>
+            <button class="sw-dot active" style="background:#f5546c;" aria-label="红色主题"></button>
+          </span>
+        </div>
+      </div>
+    </div>
+    <div style="margin-top:26px;background:#141824;border:1px solid #212839;border-radius:14px;padding:24px 28px;display:flex;align-items:center;gap:18px;flex-wrap:wrap;">
+      <span style="font-size:26px;">🌐</span>
+      <p style="font-size:15px;color:#aeb6c6;margin:0;" data-i18n-html="i18n.banner">界面内置 <b style="color:#fff;">简体中文、繁体中文、英语、日语、韩语、法语、德语</b> 七种语言，菜单里一键切换，立即生效。</p>
+    </div>
+  </div>
+</section>
+
+<!-- ============ PRIVACY ============ -->
+<section id="privacy" style="padding:26px 0 70px;">
+  <div class="container">
+    <div style="background:linear-gradient(135deg,#0e2a1c 0%,#10131c 60%);border:1px solid #1f4a33;border-radius:18px;padding:54px 40px;text-align:center;">
+      <div style="font-size:44px;margin-bottom:14px;">🛡️</div>
+      <h2 style="color:#7fd896;" data-i18n="privacy.h2">纯本地 · 零上传</h2>
+      <p style="font-size:19px;color:#fff;max-width:660px;margin:14px auto 26px;" data-i18n-html="privacy.p">
+        所有解析、播放与波形分析都由浏览器在本地完成
+        <b style="display:block;margin-top:18px;font-size:22px;">音频数据一个字节都不会离开你的电脑</b>
+      </p>
+      <div style="display:flex;gap:26px;justify-content:center;flex-wrap:wrap;font-size:14.5px;color:#8fae9c;">
+        <span data-i18n="p.b1">✓ 无账号</span><span data-i18n="p.b2">✓ 无追踪</span><span data-i18n="p.b3">✓ 无广告</span><span data-i18n="p.b4">✓ 随时随地，断网也能用</span>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ============ FEATURES ============ -->
+<section id="features" style="background:#0f121a;">
+  <div class="container">
+    <h2 data-i18n="feat.h2">不只是播放器，更是音频文件的「波形图鉴」</h2>
+    <p class="sec-sub" data-i18n="feat.sub">不用真的花四分钟听完整首音乐，你就可以"看见"它的概括全貌。</p>
+    <div class="features">
+      <div class="feature">
+        <div class="icon">〰️</div>
+        <h3 data-i18n="f1h">全文件夹波形总览</h3>
+        <p data-i18n="f1p">递归扫描所有子文件夹，每个音频一条波形，1600 个采样峰值的精细渲染——响度、节奏、段落起伏，扫一眼便知。</p>
+      </div>
+      <div class="feature">
+        <div class="icon">🎯</div>
+        <h3 data-i18n="f2h">点击波形，指哪播哪</h3>
+        <p data-i18n="f2p">波形即进度条。点击任意位置直接跳转播放，试听素材、定位精华段落不再需要拖进度条。</p>
+      </div>
+      <div class="feature">
+        <div class="icon">🥁</div>
+        <h3 data-i18n="f3h">BPM 自动检测</h3>
+        <p data-i18n="f3p">自动分析每首音频的节拍速度，支持按 BPM 排序——挑选卡点素材、按速度归类，一目了然。</p>
+      </div>
+      <div class="feature">
+        <div class="icon">🎭</div>
+        <h3 data-i18n="f4h">情绪自动分类</h3>
+        <p data-i18n="f4p">内置 9 种情绪标签：宁静、舒缓、轻快、平和、活力、欢快、激情、兴奋、狂热。音乐库的"气氛地图"。</p>
+      </div>
+      <div class="feature">
+        <div class="icon">📊</div>
+        <h3 data-i18n="f5h">播放进退变速自如可控</h3>
+        <p data-i18n="f5p">播放时底部实时频谱随之跳动，配合 0.5x–2x 变速、±5 秒快进快退、上下曲切换的完整播放控制。</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ============ SPECS ============ -->
+<section id="specs" style="background:#0f121a;">
+  <div class="container">
+    <h2 data-i18n="spec.h2">概况速览</h2>
+    <p class="sec-sub" data-i18n="spec.sub">极简，轻盈，轻到不像一个"软件"。</p>
+    <div class="specs">
+      <div>
+        <div class="spec-row"><span class="k" data-i18n="k.ver">当前版本</span><span class="v">V3.05</span></div>
+        <div class="spec-row"><span class="k" data-i18n="k.size">文件大小</span><span class="v" data-i18n="v.size">约 95 KB（单文件）</span></div>
+        <div class="spec-row"><span class="k" data-i18n="k.env">运行环境</span><span class="v" data-i18n="v.env">Chrome / Edge 86+（桌面端）</span></div>
+        <div class="spec-row"><span class="k" data-i18n="k.net">网络需求</span><span class="v" data-i18n="v.net">离线可用，零上传</span></div>
+      </div>
+      <div>
+        <div class="spec-row"><span class="k" data-i18n="k.lang">界面语言</span><span class="v" data-i18n="v.lang">简中 / 繁中 / 英 / 日 / 韩 / 法 / 德</span></div>
+        <div class="spec-row"><span class="k" data-i18n="k.look">外观</span><span class="v" data-i18n="v.look">亮 / 暗双主题 + 自定义主题色</span></div>
+        <div class="spec-row"><span class="k" data-i18n="k.ctrl">播放控制</span><span class="v" data-i18n="v.ctrl">0.5x–2x 变速 · ±5 秒进退 · 上下曲</span></div>
+        <div class="spec-row"><span class="k" data-i18n="k.price">价格</span><span class="v" data-i18n="v.price">免费</span></div>
+      </div>
+    </div>
+    <div style="margin-top:24px;background:#141824;border:1px solid #212839;border-radius:14px;padding:22px 26px;">
+      <div style="display:flex;align-items:center;gap:10px;">
+        <span style="font-size:20px;">🎵</span>
+        <span style="font-size:15px;color:#8a93a5;" data-i18n="fmt.label">可识别的音频格式</span>
+      </div>
+      <div style="display:flex;flex-wrap:wrap;gap:10px;margin-top:16px;">
+        <span class="fmt-chip">MP3</span><span class="fmt-chip">WAV</span><span class="fmt-chip">FLAC</span><span class="fmt-chip">OGG</span><span class="fmt-chip">OGA</span><span class="fmt-chip">M4A</span><span class="fmt-chip">M4B</span><span class="fmt-chip">AAC</span><span class="fmt-chip">OPUS</span><span class="fmt-chip">WEBA</span><span class="fmt-chip">WEBM</span><span class="fmt-chip">AIFF</span><span class="fmt-chip">AIF</span><span class="fmt-chip">APE</span><span class="fmt-chip">MID</span><span class="fmt-chip">MIDI</span><span class="fmt-chip">WMA</span>
+        <span class="fmt-chip" style="background:rgba(79,140,255,.12);border-color:#2b3b5e;color:#8fb4ff;" data-i18n="fmt.count">共 17 种</span>
+      </div>
+      <p style="margin:22px 0 0;font-size:13.5px;font-weight:700;color:#e6e8ee;" data-i18n="fmt.note">* 波形与 BPM 分析基于浏览器本地解码，单文件解码上限 150MB；实际可播放的格式取决于浏览器内置解码器，部分浏览器不支持WMA。</p>
+    </div>
+  </div>
+</section>
+
+<!-- ============ DOWNLOAD ============ -->
+<section id="download">
+  <div class="container">
+    <div class="dl-card">
+      <h2 style="margin-bottom:4px;" data-i18n="dl.h2">立即带走</h2>
+      <p class="ver" data-i18n="dl.ver">WaveAtlas Audio Browser V3.05 · 单文件 HTML · 约 95 KB</p>
+      <div class="cta-row" style="display:flex;gap:16px;justify-content:center;flex-wrap:wrap;">
+        <a class="btn btn-primary" href="WaveAtlasAudioBrowser_v3.05.html" download="WaveAtlasAudioBrowser_v3.05.html" data-i18n="dl.primary">⬇ 下载离线版（推荐）</a>
+        <a class="btn btn-ghost" href="WaveAtlasAudioBrowser_v3.05.html" target="_blank" data-i18n="dl.ghost">▶ 先在线试试</a>
+      </div>
+      <p class="meta" data-i18n="dl.meta">MD5 校验与更新日志 · 详见使用说明</p>
+      <div class="dl-note">
+        <b data-i18n="dl.ntitle">使用方法（3 步）</b>
+        <ol>
+          <li data-i18n="dl.n1">点击上方按钮下载 HTML 文件（也可以右键"链接另存为"）</li>
+          <li data-i18n="dl.n2">用 Chrome 或 Edge 浏览器直接打开这个文件（双击即可）</li>
+          <li data-i18n="dl.n3">点击左上角「📂 选择文件夹」，授权后即可浏览播放</li>
+        </ol>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ============ FAQ ============ -->
+<section id="faq" style="background:#0f121a;">
+  <div class="container">
+    <h2 data-i18n="faq.h2">常见问题</h2>
+    <p class="sec-sub" data-i18n="faq.sub">在使用之前，你可能想知道这些。</p>
+    <div class="faq-item">
+      <h3 data-i18n="q1h">我的音频文件会被上传吗？</h3>
+      <p data-i18n="q1p">不会。观澜是纯本地工具，所有解析、波形渲染、BPM 与情绪分析都在你的浏览器内完成，没有任何服务器参与，也没有任何数据上传。你可以断网使用来验证这一点。</p>
+    </div>
+    <div class="faq-item">
+      <h3 data-i18n="q2h">怎么"安装"和"卸载"？</h3>
+      <p data-i18n="q2p">不需要安装。整个软件就是一个约 95 KB 的 HTML 文件，下载后双击用 Chrome / Edge 打开即用。想卸载？删掉文件即可，不留任何痕迹。</p>
+    </div>
+    <div class="faq-item">
+      <h3 data-i18n="q3h">支持哪些音频格式？</h3>
+      <p data-i18n="q3p">可识别并列出 MP3、WAV、FLAC、OGG、M4A、AAC、OPUS、AIFF、APE、MIDI 等 17 种扩展名的音频文件；实际可播放的格式取决于浏览器内置解码器（Chrome / Edge 覆盖绝大多数常见格式，WMA 建议转码）。</p>
+    </div>
+    <div class="faq-item">
+      <h3 data-i18n="q4h">为什么需要"选择文件夹"授权？</h3>
+      <p data-i18n="q4p">这是浏览器（Chrome / Edge 86+）提供的本地文件夹读取权限，授权后工具才能列出并读取你选择的文件夹。授权范围仅限该文件夹，且只读——工具不会修改、移动或删除任何文件。</p>
+    </div>
+    <div class="faq-item">
+      <h3 data-i18n="q5h">免费使用，以后怎么更新？</h3>
+      <p data-i18n="q5p">工具会持续迭代。重新下载最新版 HTML 文件、覆盖旧文件即可完成升级，没有任何迁移成本。</p>
+    </div>
+  </div>
+</section>
+
+<!-- ============ FOOTER ============ -->
+<footer>
+  <div class="container">
+    <p class="fb" data-i18n-html="ft.issues">发现问题或有功能建议？欢迎在 <a href="#" title="GitHub Issues 地址待填">GitHub Issues</a> 留言</p>
+    <p style="margin-top:10px;color:#fff;">© <span id="year">2026</span> WaveAtlas Audio Browser · 观澜音频浏览器 · by <b>Amateurape</b></p>
+    <p style="margin-top:6px;font-size:12px;color:#8a93a5;">「观水有术，必观其澜」 —— 《孟子·尽心上》</p>
+  </div>
+</footer>
+
+<script src="i18n.js"></script>
+<script>
+/* Hero 动态波形背景 */
+(function () {
+  const cv = document.getElementById('heroWave');
+  const ctx = cv.getContext('2d');
+  let W, H, t = 0;
+  function resize() { W = cv.width = cv.offsetWidth * devicePixelRatio; H = cv.height = cv.offsetHeight * devicePixelRatio; }
+  window.addEventListener('resize', resize); resize();
+  const N = 90;
+  function draw() {
+    ctx.clearRect(0, 0, W, H);
+    const mid = H * .6, step = W / N;
+    for (let i = 0; i <= N; i++) {
+      const x = i * step;
+      const env = Math.sin(i / N * Math.PI);
+      const h = (Math.sin(i * .7 + t * .0165) * .5 + Math.sin(i * .23 + t * .0095) * .35 + Math.sin(i * 1.7 + t * .0275) * .15) * H * .34 * (.4 + .6 * env) + H * .02;
+      ctx.fillStyle = 'rgba(168,178,198,.28)';
+      ctx.fillRect(x + step * .22, mid - h, step * .56, h * 2);
+    }
+    t += 1; requestAnimationFrame(draw);
+  }
+  draw();
+})();
+/* 版权年份自动更新 */
+document.getElementById('year').textContent = new Date().getFullYear();
+/* 截图灯箱：点击放大，背景压暗 */
+(function () {
+  const lb = document.createElement('div');
+  lb.className = 'lightbox';
+  lb.innerHTML = '<img alt="截图放大预览"><span class="lb-hint">点击任意位置或按 ESC 关闭</span>';
+  document.body.appendChild(lb);
+  const target = lb.querySelector('img');
+  document.querySelectorAll('.shot').forEach(img => {
+    img.addEventListener('click', () => { target.src = img.src; lb.classList.add('open'); });
+  });
+  lb.addEventListener('click', () => lb.classList.remove('open'));
+  document.addEventListener('keydown', e => { if (e.key === 'Escape') lb.classList.remove('open'); });
+})();
+/* 主题对比滑块：拖动分割线切换亮暗 */
+(function () {
+  const cmp = document.getElementById('themeCmp');
+  const top = document.getElementById('cmpTop');
+  const div = document.getElementById('cmpDiv');
+  let dragging = false;
+  function setPos(clientX) {
+    const rect = cmp.getBoundingClientRect();
+    let p = (clientX - rect.left) / rect.width;
+    p = Math.max(0, Math.min(1, p));
+    top.style.clipPath = 'inset(0 ' + ((1 - p) * 100) + '% 0 0)';
+    div.style.left = (p * 100) + '%';
+  }
+  cmp.addEventListener('pointerdown', e => {
+    dragging = true;
+    cmp.setPointerCapture(e.pointerId);
+    setPos(e.clientX);
+  });
+  cmp.addEventListener('pointermove', e => { if (dragging) setPos(e.clientX); });
+  cmp.addEventListener('pointerup', () => { dragging = false; });
+  cmp.addEventListener('pointercancel', () => { dragging = false; });
+})();
+/* 主题色切换器：点色点换图 */
+(function () {
+  const img = document.getElementById('accentImg');
+  const names = ['blue','purple','green','yellow','orange','red'];
+  const dots = document.querySelectorAll('#accentDots .sw-dot');
+  dots.forEach((dot, i) => {
+    dot.addEventListener('click', () => {
+      img.src = 'images/06-accent-' + names[i] + '.png';
+      dots.forEach(d => d.classList.remove('active'));
+      dot.classList.add('active');
+    });
+  });
+})();
+/* ====== 多语言引擎 ====== */
+(function () {
+  const DICT = window.WA_I18N;
+  const LANGS = ['zh-CN', 'zh-TW', 'en', 'ja', 'ko'];
+  function detect() {
+    for (const l of (navigator.languages || [navigator.language || 'zh-CN'])) {
+      const s = l.toLowerCase();
+      if (s.startsWith('zh-tw') || s.startsWith('zh-hk') || s.startsWith('zh-hant')) return 'zh-TW';
+      if (s.startsWith('zh')) return 'zh-CN';
+      if (s.startsWith('ja')) return 'ja';
+      if (s.startsWith('ko')) return 'ko';
+      if (s.startsWith('en')) return 'en';
+    }
+    return 'en';
+  }
+  function applyLang(lang) {
+    if (LANGS.indexOf(lang) < 0) lang = 'zh-CN';
+    const dict = DICT[lang];
+    document.querySelectorAll('[data-i18n]').forEach(el => {
+      const k = el.getAttribute('data-i18n');
+      if (dict[k] !== undefined) el.textContent = dict[k];
+    });
+    document.querySelectorAll('[data-i18n-html]').forEach(el => {
+      const k = el.getAttribute('data-i18n-html');
+      if (dict[k] !== undefined) el.innerHTML = dict[k];
+    });
+    document.documentElement.lang = lang;
+    document.title = dict['doc.title'];
+    const md = document.querySelector('meta[name="description"]');
+    if (md && dict['meta.desc']) md.setAttribute('content', dict['meta.desc']);
+    const lb = document.querySelector('.lb-hint');
+    if (lb) lb.textContent = dict['lb.hint'];
+    localStorage.setItem('wa-lang', lang);
+    document.querySelectorAll('#langSwitch button').forEach(b => b.classList.toggle('active', b.dataset.lang === lang));
+  }
+  document.querySelectorAll('#langSwitch button').forEach(b => {
+    b.addEventListener('click', () => applyLang(b.dataset.lang));
+  });
+  const saved = localStorage.getItem('wa-lang');
+  applyLang(saved && LANGS.indexOf(saved) >= 0 ? saved : detect());
+})();
+</script>
+</body>
+</html>

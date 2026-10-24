@@ -1,0 +1,2738 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="light">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="application-name" content="WaveAtlas Audio Browser V3.05">
+<title>WaveAtlas Audio Browser V3.05</title>
+<style>
+  :root {
+    --accent: #4f8cff;
+    --bg: #f4f5f7;
+    --panel: #ffffff;
+    --panel-2: #fafbfc;
+    --text: #1f2328;
+    --text-dim: #6e7781;
+    --border: #e3e6ea;
+    --hover: #f0f3f8;
+    --wave: #c9d1dc;
+    --radius: 8px;
+  }
+  html[data-theme="dark"] {
+    --bg: #14161a;
+    --panel: #1b1e24;
+    --panel-2: #20242b;
+    --text: #e6e9ee;
+    --text-dim: #8a93a0;
+    --border: #2a2f38;
+    --hover: #242932;
+    --wave: #3c4350;
+  }
+  * { box-sizing: border-box; }
+  html, body { height: 100%; margin: 0; }
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "PingFang SC",
+                 "Hiragino Sans GB", "Microsoft YaHei", sans-serif;
+    font-size: 13px; line-height: 1.4; color: var(--text);
+    background: var(--bg); overflow: hidden; -webkit-font-smoothing: antialiased;
+  }
+  .app { display: flex; flex-direction: column; height: 100vh; }
+
+  .topbar {
+    height: 52px; flex: 0 0 auto; display: flex; align-items: center;
+    gap: 12px; padding: 0 16px; background: var(--panel);
+    border-bottom: 1px solid var(--border);
+    min-width: 0;
+  }
+  .brand {
+    font-size: 14px; font-weight: 600; letter-spacing: .3px;
+    display: flex; align-items: center; gap: 7px; flex: 0 0 auto;
+    white-space: nowrap;
+  }
+  .brand .dot { width: 9px; height: 9px; border-radius: 50%; background: var(--accent); }
+  .brand .version {
+    font-size: 11px; font-weight: 500; color: var(--text-dim);
+    margin-left: 4px; letter-spacing: .3px;
+  }
+  .top-tools { margin-left: auto; flex: 0 0 auto; display: flex; align-items: center; gap: 10px; }
+
+  button {
+    font-family: inherit; font-size: 12px; color: var(--text);
+    background: var(--panel-2); border: 1px solid var(--border);
+    border-radius: var(--radius); height: 32px; padding: 0 12px;
+    cursor: pointer; display: inline-flex; align-items: center; gap: 6px;
+    transition: background .15s, border-color .15s, color .15s; white-space: nowrap;
+  }
+  button:hover { background: var(--hover); border-color: var(--accent); }
+  button.primary { background: var(--accent); border-color: var(--accent); color: #fff; font-weight: 500; }
+  button.primary:hover { filter: brightness(1.08); }
+  button:disabled { opacity: .5; cursor: not-allowed; }
+  .color-pill {
+    display: inline-flex; align-items: center; gap: 7px; height: 32px;
+    padding: 0 10px; border: 1px solid var(--border); border-radius: var(--radius);
+    background: var(--panel-2); font-size: 12px; color: var(--text-dim); cursor: pointer;
+  }
+  .color-pill input[type="color"] { width: 20px; height: 20px; padding: 0; border: none; background: none; cursor: pointer; }
+  .color-pill input[type="color"]::-webkit-color-swatch-wrapper { padding: 0; }
+  .color-pill input[type="color"]::-webkit-color-swatch { border: 1px solid var(--border); border-radius: 50%; }
+
+  .lang-wrap {
+    display: inline-flex; align-items: center; gap: 7px;
+    flex: 0 0 auto;
+  }
+  .lang-label {
+    font-size: 12px; color: var(--text-dim);
+    white-space: nowrap; user-select: none;
+  }
+  .lang-select {
+    height: 32px; padding: 0 26px 0 11px;
+    font-family: inherit; font-size: 12px; color: var(--text);
+    background: var(--panel-2); border: 1px solid var(--border);
+    border-radius: var(--radius); cursor: pointer; outline: none;
+    appearance: none; -webkit-appearance: none; -moz-appearance: none;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='6' viewBox='0 0 10 6'%3E%3Cpath fill='%236e7781' d='M0 0h10L5 6z'/%3E%3C/svg%3E");
+    background-repeat: no-repeat;
+    background-position: right 10px center;
+    transition: border-color .15s, box-shadow .15s;
+  }
+  .lang-select:hover { border-color: var(--accent); }
+  .lang-select:focus { border-color: var(--accent); box-shadow: 0 0 0 3px color-mix(in srgb, var(--accent) 15%, transparent); }
+
+  main { flex: 1; display: flex; min-height: 0; }
+  .sidebar {
+    width: 268px; flex: 0 0 auto; background: var(--panel);
+    border-right: 1px solid var(--border); display: flex; flex-direction: column; min-height: 0;
+  }
+  .sidebar-title {
+    height: 36px; flex: 0 0 auto; display: flex; align-items: center; padding: 0 16px;
+    font-size: 11px; font-weight: 600; letter-spacing: .8px; text-transform: uppercase;
+    color: var(--text-dim); border-bottom: 1px solid var(--border);
+  }
+  .sidebar-toolbar {
+    flex: 0 0 auto; padding: 8px 12px; border-bottom: 1px solid var(--border);
+  }
+  .sidebar-toolbar button { width: 100%; justify-content: center; }
+  .tree { flex: 1; overflow: auto; padding: 6px 0 16px; }
+  .node-row {
+    display: flex; align-items: center; gap: 6px; height: 28px; padding-right: 10px;
+    cursor: pointer; user-select: none; border-radius: 0 6px 6px 0; margin-right: 8px;
+    font-size: 12.5px; white-space: nowrap; overflow: hidden;
+  }
+  .node-row:hover { background: var(--hover); }
+  .node-row.active { background: color-mix(in srgb, var(--accent) 14%, transparent); color: var(--accent); font-weight: 500; }
+  .caret { width: 14px; flex: 0 0 14px; text-align: center; font-size: 9px; color: var(--text-dim); transition: transform .15s; display: inline-block; }
+  .caret.open { transform: rotate(90deg); }
+  .node-name { overflow: hidden; text-overflow: ellipsis; flex: 1; }
+  .folder-icon { font-size: 12px; opacity: .75; flex: 0 0 auto; }
+  .node-loading { font-size: 10px; color: var(--text-dim); margin-left: 4px; }
+
+  .content { flex: 1; display: flex; flex-direction: column; min-width: 0; min-height: 0; }
+  .content-head {
+    height: 44px; flex: 0 0 auto; display: flex; align-items: center; gap: 12px;
+    padding: 0 16px; border-bottom: 1px solid var(--border); background: var(--panel);
+  }
+  #currentPath { font-size: 12.5px; color: var(--text-dim); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; flex: 1; }
+  .search-input {
+    height: 28px; width: 170px; padding: 0 12px; font-size: 12px;
+    border: 1px solid var(--border); border-radius: 14px;
+    background: var(--panel-2); color: var(--text); outline: none;
+    transition: border-color .15s, width .2s, box-shadow .15s;
+    font-family: inherit;
+  }
+  .search-input::placeholder { color: var(--text-dim); }
+  .search-input:focus { border-color: var(--accent); width: 220px; box-shadow: 0 0 0 3px color-mix(in srgb, var(--accent) 15%, transparent); }
+  .search-input:disabled { opacity: .45; cursor: default; }
+  #fileCount { font-size: 11.5px; color: var(--text-dim); flex: 0 0 auto; }
+
+  .list-head, .file-row {
+    display: grid;
+    grid-template-columns: minmax(120px, 1fr) 56px 54px 120px minmax(130px, 1.5fr) 62px 78px;
+    gap: 12px; align-items: center; padding: 0 16px;
+    min-width: 820px;
+  }
+  .list-head {
+    height: 34px; flex: 0 0 auto; font-size: 11px; font-weight: 600;
+    letter-spacing: .6px; color: var(--text-dim);
+    border-bottom: 1px solid var(--border); background: var(--panel);
+    user-select: none;
+    position: sticky; top: 0; z-index: 2;
+  }
+  .list-head [data-sort] {
+    cursor: pointer; display: inline-flex; align-items: center; gap: 4px;
+    height: 100%; white-space: nowrap; transition: color .12s;
+  }
+  .list-head [data-sort]:hover { color: var(--text); }
+  .list-head [data-sort].sorted { color: var(--accent); }
+  .sort-arrow { display: inline-block; width: 8px; font-size: 8px; }
+  .file-list { flex: 1; overflow: auto; min-height: 0; background: var(--panel-2); }
+  .file-row { height: 58px; border-bottom: 1px solid var(--border); transition: background .12s; }
+  .file-row:hover { background: var(--hover); }
+
+  .file-row.active { background: color-mix(in srgb, var(--accent) 7%, transparent); }
+  .file-row.playing {
+    background: color-mix(in srgb, var(--accent) 26%, var(--panel));
+    box-shadow: inset 3px 0 0 var(--accent);
+  }
+  .file-row.playing:hover { background: color-mix(in srgb, var(--accent) 32%, var(--panel)); }
+  .file-row.playing .cell.name { font-weight: 600; color: var(--accent); }
+
+  .cell { min-width: 0; overflow: hidden; }
+  .cell.name { font-size: 12.5px; white-space: nowrap; text-overflow: ellipsis; overflow: hidden; }
+  .cell.dim { color: var(--text-dim); font-size: 12px; font-variant-numeric: tabular-nums; }
+  .cell.small { font-size: 11px; color: var(--text-dim); display: flex; flex-direction: column; gap: 1px; }
+  .cell.small span { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .cell.bpm { font-size: 13px; font-weight: 600; font-variant-numeric: tabular-nums; color: var(--text); }
+  .cell.bpm.empty { color: var(--text-dim); font-weight: 400; }
+
+  .tag {
+    display: inline-block; font-size: 10px; font-weight: 600; letter-spacing: .5px;
+    padding: 1px 6px; border-radius: 4px;
+    background: color-mix(in srgb, var(--accent) 15%, transparent);
+    color: var(--accent);
+  }
+  .tag.tag-warn {
+    background: color-mix(in srgb, #e8a33d 16%, transparent);
+    color: #b87d1e;
+  }
+  html[data-theme="dark"] .tag.tag-warn {
+    background: color-mix(in srgb, #e8a33d 25%, transparent);
+    color: #f0b85a;
+  }
+
+  .wave-cell { display: flex; align-items: center; }
+  canvas.wave { width: 100%; height: 34px; display: block; border-radius: 4px; cursor: pointer; }
+
+  .empty-tip { padding: 32px 16px; text-align: center; color: var(--text-dim); font-size: 12.5px; line-height: 1.7; }
+  .empty-tip.small { padding: 6px 0; text-align: left; font-size: 12px; line-height: 1.5; }
+
+  .mood-tag {
+    display: inline-block;
+    font-size: 10.5px;
+    padding: 1px 8px;
+    border-radius: 10px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    max-width: 100%;
+    background: color-mix(in srgb, var(--mood-color, #888) 18%, transparent);
+    color: var(--mood-color, #888);
+    vertical-align: middle;
+  }
+  .mood-calm      { --mood-color: #7c8fcc; }
+  .mood-gentle    { --mood-color: #5f8fcf; }
+  .mood-light     { --mood-color: #4fa3c9; }
+  .mood-peaceful  { --mood-color: #46b08a; }
+  .mood-energetic { --mood-color: #9fac46; }
+  .mood-happy     { --mood-color: #caa33a; }
+  .mood-passionate{ --mood-color: #dd8038; }
+  .mood-excited   { --mood-color: #dd6344; }
+  .mood-intense   { --mood-color: #d04a4a; }
+  .meta-empty { color: var(--text-dim); font-size: 12px; }
+
+  .playbar {
+    flex: 0 0 auto;
+    height: 60px;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 0 16px;
+    background: var(--panel);
+    border-top: 1px solid var(--border);
+    min-width: 0;
+  }
+  .playbar-side {
+    flex: 1 1 0;
+    min-width: 0;
+    display: flex;
+    align-items: center;
+  }
+  .playbar-left { justify-content: flex-start; }
+  .playbar-right { justify-content: flex-end; }
+
+  .now-path {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    min-width: 0;
+    max-width: 100%;
+    font-size: 12px;
+    color: var(--text-dim);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    transition: color .15s;
+  }
+  .now-path.has-file { color: var(--text); font-weight: 500; }
+  .path-icon {
+    width: 14px;
+    height: 14px;
+    flex: 0 0 auto;
+    color: var(--accent);
+    opacity: .55;
+    transition: opacity .15s;
+  }
+  .now-path.has-file .path-icon { opacity: 1; }
+  .path-text {
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    min-width: 0;
+  }
+
+  .playbar-center {
+    flex: 1 1 auto;
+    max-width: 1180px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 14px;
+    min-width: 0;
+  }
+  .side-slot {
+    flex: 1 1 0;
+    display: flex;
+    align-items: center;
+    min-width: 0;
+  }
+  .side-left  { justify-content: flex-end; }
+  .side-right { justify-content: flex-start; gap: 8px; }
+
+  .progress-area {
+    display: flex; align-items: center; gap: 8px;
+    width: 100%;
+    max-width: 380px;
+    min-width: 120px;
+  }
+  .progress-slider {
+    flex: 1; min-width: 60px; height: 4px;
+    accent-color: var(--accent);
+    cursor: pointer;
+  }
+  .time-label {
+    font-size: 11px; color: var(--text-dim);
+    font-variant-numeric: tabular-nums;
+    flex: 0 0 auto; min-width: 32px; text-align: center;
+  }
+  .volume-ctl {
+    display: inline-flex; align-items: center; gap: 6px;
+    height: 32px; padding: 0 8px; flex: 0 0 auto;
+    border: 1px solid var(--border); border-radius: var(--radius);
+    background: var(--panel-2);
+  }
+  .vol-btn {
+    width: 26px; height: 26px; padding: 0; border: none;
+    background: none; font-size: 15px; line-height: 1;
+    cursor: pointer; border-radius: 5px;
+    display: inline-flex; align-items: center; justify-content: center;
+  }
+  .vol-btn:hover { background: var(--hover); }
+  #volumeSlider {
+    width: 76px; height: 4px;
+    accent-color: var(--accent);
+    cursor: pointer;
+  }
+
+  .spectrum {
+    display: block;
+    flex: 0 0 auto;
+    width: 112px;
+    height: 32px;
+    border-radius: var(--radius);
+    background: rgba(18, 20, 26, 0.88);
+    border: 1px solid var(--border);
+    box-shadow: inset 0 0 0 1px rgba(255,255,255,0.03);
+  }
+  html[data-theme="dark"] .spectrum {
+    background: rgba(0, 0, 0, 0.5);
+  }
+
+  .play-controls { display: inline-flex; align-items: center; gap: 4px; flex: 0 0 auto; }
+
+  .ctrl-btn {
+    height: 30px; width: 32px; padding: 0; border-radius: 6px;
+    border: 1px solid var(--border); background: var(--panel);
+    font-size: 12px; display: inline-flex; align-items: center; justify-content: center;
+    color: var(--text); cursor: pointer; transition: background .12s, border-color .12s, color .12s;
+    font-family: inherit;
+  }
+  .ctrl-btn:hover { background: var(--hover); border-color: var(--accent); color: var(--accent); }
+  .ctrl-btn:disabled { opacity: .35; cursor: default; }
+  .ctrl-btn:disabled:hover { background: var(--panel); border-color: var(--border); color: var(--text); }
+
+  .ctrl-btn.speed { width: 50px; font-size: 11px; font-variant-numeric: tabular-nums; font-weight: 600; }
+
+  .icon-svg {
+    width: 16px;
+    height: 16px;
+    display: block;
+    pointer-events: none;
+  }
+
+  .ctrl-btn.pause-btn { position: relative; }
+  .ctrl-btn.pause-btn::before,
+  .ctrl-btn.pause-btn::after {
+    content: '';
+    position: absolute;
+    top: 50%;
+    width: 3px;
+    height: 12px;
+    background: currentColor;
+    border-radius: 1px;
+    transform: translateY(-50%);
+    pointer-events: none;
+  }
+  .ctrl-btn.pause-btn::before { left: calc(50% - 5px); }
+  .ctrl-btn.pause-btn::after { left: calc(50% + 2px); }
+
+  .ctrl-btn.prev-btn { position: relative; }
+  .ctrl-btn.prev-btn::before {
+    content: '';
+    position: absolute;
+    top: 50%;
+    left: 7px;
+    width: 2.5px;
+    height: 12px;
+    background: currentColor;
+    border-radius: 1px;
+    transform: translateY(-50%);
+  }
+  .ctrl-btn.prev-btn::after {
+    content: '';
+    position: absolute;
+    top: 50%;
+    left: 11px;
+    width: 0;
+    height: 0;
+    border-style: solid;
+    border-width: 5.5px 7.5px 5.5px 0;
+    border-color: transparent currentColor transparent transparent;
+    transform: translateY(-50%);
+  }
+  .ctrl-btn.next-btn { position: relative; }
+  .ctrl-btn.next-btn::before {
+    content: '';
+    position: absolute;
+    top: 50%;
+    left: 13px;
+    width: 0;
+    height: 0;
+    border-style: solid;
+    border-width: 5.5px 0 5.5px 7.5px;
+    border-color: transparent transparent transparent currentColor;
+    transform: translateY(-50%);
+  }
+  .ctrl-btn.next-btn::after {
+    content: '';
+    position: absolute;
+    top: 50%;
+    left: 23px;
+    width: 2.5px;
+    height: 12px;
+    background: currentColor;
+    border-radius: 1px;
+    transform: translateY(-50%);
+  }
+
+  #toast {
+    position: fixed; left: 50%; bottom: 80px; transform: translate(-50%, 12px);
+    background: color-mix(in srgb, var(--text) 88%, transparent);
+    color: var(--panel);
+    padding: 8px 16px; border-radius: 8px; font-size: 12.5px;
+    opacity: 0; pointer-events: none;
+    transition: opacity .2s, transform .2s;
+    max-width: 80vw; z-index: 999;
+    box-shadow: 0 6px 24px rgba(0,0,0,.18);
+  }
+  #toast.show { opacity: 1; transform: translate(-50%, 0); }
+
+  ::-webkit-scrollbar { width: 10px; height: 10px; }
+  ::-webkit-scrollbar-thumb { background: color-mix(in srgb, var(--text-dim) 35%, transparent); border-radius: 6px; border: 2px solid transparent; background-clip: content-box; }
+  ::-webkit-scrollbar-thumb:hover { background-clip: content-box; background-color: var(--text-dim); }
+  ::-webkit-scrollbar-track { background: transparent; }
+
+  @media (max-width: 1360px) {
+    .playbar-center { gap: 10px; }
+    .progress-area { max-width: 320px; }
+    .spectrum { width: 96px; }
+  }
+  @media (max-width: 1120px) {
+    .volume-ctl { display: none; }
+    .spectrum { display: none; }
+    #topPrev, #topNext { display: none; }
+    .progress-area { max-width: 280px; }
+  }
+  @media (max-width: 900px) {
+    .sidebar { width: 200px; }
+    #topSpeed { display: none; }
+    .playbar-left, .playbar-right { display: none; }
+    .playbar-center { flex: 1 1 auto; gap: 8px; }
+    .side-slot { flex: 0 1 auto; }
+    .side-left { flex: 1 1 auto; }
+    .progress-area { max-width: 100%; min-width: 80px; }
+    .search-input { width: 130px; }
+    .search-input:focus { width: 160px; }
+    .lang-label { display: none; }
+  }
+</style>
+</head>
+<body>
+
+<div class="app">
+  <header class="topbar">
+    <div class="brand">
+      <span class="dot"></span>
+      <span data-i18n="appName">WaveAtlas Audio Browser</span>
+      <span class="version">V3.05</span>
+    </div>
+    <div class="top-tools">
+      <div class="lang-wrap">
+        <span class="lang-label" data-i18n="language">Language</span>
+        <select class="lang-select" id="langSelect" data-i18n-title="language" title="Language"></select>
+      </div>
+      <label class="color-pill" data-i18n-title="accent" title="Accent Color">
+        <span data-i18n="accent">Accent</span>
+        <input type="color" id="accentPicker" value="#4f8cff">
+      </label>
+      <button id="themeBtn">🌙 Dark</button>
+    </div>
+  </header>
+
+  <main>
+    <aside class="sidebar">
+      <div class="sidebar-title" data-i18n="folders">Folders</div>
+      <div class="sidebar-toolbar">
+        <button id="pickFolderBtn" class="primary"
+                data-i18n="selectFolder"
+                data-i18n-title="selectFolderTip"
+                title="Select a local folder">📂 Select Folder</button>
+      </div>
+      <div class="tree" id="tree">
+        <div class="empty-tip" data-i18n="emptyTreeHint">Click "Select Folder" above to load folder contents</div>
+      </div>
+    </aside>
+
+    <section class="content">
+      <div class="content-head">
+        <div id="currentPath">No folder selected</div>
+        <input type="search" class="search-input" id="searchInput"
+               data-i18n-placeholder="searchPlaceholder"
+               placeholder="Search name / type…" disabled>
+        <div id="fileCount"></div>
+      </div>
+      <div class="file-list" id="fileList">
+        <div class="list-head" id="listHead">
+          <span data-sort="name"><span data-i18n="colName">Name</span> <span class="sort-arrow"></span></span>
+          <span data-sort="ext"><span data-i18n="colType">Type</span> <span class="sort-arrow"></span></span>
+          <span data-sort="duration"><span data-i18n="colDuration">Duration</span> <span class="sort-arrow"></span></span>
+          <span data-sort="data"><span data-i18n="colAudioData">Audio Data</span> <span class="sort-arrow"></span></span>
+          <span data-i18n="colWaveform">Waveform</span>
+          <span data-sort="bpm"><span data-i18n="colBpm">BPM</span> <span class="sort-arrow"></span></span>
+          <span data-i18n="colMood">Mood</span>
+        </div>
+        <div class="empty-tip" data-i18n="emptyListHint">After selecting a folder, audio files will be listed here</div>
+      </div>
+    </section>
+  </main>
+
+  <footer class="playbar">
+    <div class="playbar-side playbar-left">
+      <div class="now-path" id="nowPlayingPath" title="">
+        <svg class="path-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+             stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+          <path d="M9 18V5l12-2v13"></path>
+          <circle cx="6" cy="18" r="3"></circle>
+          <circle cx="18" cy="16" r="3"></circle>
+        </svg>
+        <span class="path-text">No audio selected</span>
+      </div>
+    </div>
+
+    <div class="playbar-center">
+      <div class="side-slot side-left">
+        <div class="progress-area">
+          <span class="time-label" id="timeCurrent">0:00</span>
+          <input type="range" class="progress-slider" id="progressSlider" min="0" max="1000" value="0"
+                 data-i18n-title="progressTip" title="Playback progress">
+          <span class="time-label" id="timeTotal">0:00</span>
+        </div>
+      </div>
+
+      <div class="play-controls">
+        <!-- Rewind: counter-clockwise ring, gap at upper-left, L-shaped arrow at gap -->
+        <button class="ctrl-btn" id="topRewind" disabled
+                data-i18n-title="rewindTip" title="Rewind 5s (←)">
+          <svg class="icon-svg" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+               stroke-width="3.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+            <polyline points="1 4 1 10 7 10"></polyline>
+            <path d="M3.51 15a9 9 0 1 0 2.13-9.36L1 10"></path>
+          </svg>
+        </button>
+        <button class="ctrl-btn prev-btn" id="topPrev" disabled
+                data-i18n-title="prevTip" title="Previous (↑)"></button>
+        <button class="ctrl-btn" id="topPlay" disabled
+                data-i18n-title="playTip" title="Play (Space)">▶</button>
+        <button class="ctrl-btn pause-btn" id="topPause" disabled
+                data-i18n-title="pauseTip" title="Pause (Space)"></button>
+        <button class="ctrl-btn next-btn" id="topNext" disabled
+                data-i18n-title="nextTip" title="Next (↓)"></button>
+        <!-- Forward: clockwise ring, gap at upper-right, mirrored arrow -->
+        <button class="ctrl-btn" id="topFwd" disabled
+                data-i18n-title="forwardTip" title="Forward 5s (→)">
+          <svg class="icon-svg" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+               stroke-width="3.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+            <polyline points="23 4 23 10 17 10"></polyline>
+            <path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10"></path>
+          </svg>
+        </button>
+        <button class="ctrl-btn speed" id="topSpeed"
+                data-i18n-title="speedTip" title="Change speed">1x</button>
+      </div>
+
+      <div class="side-slot side-right">
+        <div class="volume-ctl">
+          <button id="muteBtn" class="vol-btn"
+                  data-i18n-title="muteTip" title="Mute / Unmute">🔊</button>
+          <input type="range" id="volumeSlider" min="0" max="100" value="100"
+                 data-i18n-title="volumeTip" title="Volume">
+        </div>
+        <canvas class="spectrum" id="spectrumCanvas"
+                data-i18n-title="spectrumTip" title="Real-time Spectrum"></canvas>
+      </div>
+    </div>
+
+    <div class="playbar-side playbar-right"></div>
+  </footer>
+</div>
+
+<div id="toast"></div>
+
+<script>
+(() => {
+  'use strict';
+
+  /* ============================================================
+   * i18n
+   * ============================================================ */
+  const I18N = {
+    en: {
+      appName: 'WaveAtlas Audio Browser',
+      accent: 'Accent',
+      themeDark: '🌙 Dark',
+      themeLight: '☀️ Light',
+      language: 'Language',
+      folders: 'Folders',
+      selectFolder: '📂 Select Folder',
+      selectFolderTip: 'Select a local folder',
+      emptyTreeHint: 'Click "Select Folder" above to load folder contents',
+      noFolderSelected: 'No folder selected',
+      searchPlaceholder: 'Search name / type…',
+      colName: 'Name',
+      colType: 'Type',
+      colDuration: 'Duration',
+      colAudioData: 'Audio Data',
+      colWaveform: 'Waveform',
+      colBpm: 'BPM',
+      colMood: 'Mood',
+      emptyListHint: 'After selecting a folder, audio files will be listed here',
+      noAudioInFolder: 'No audio files in this folder',
+      noAudioSelected: 'No audio selected',
+      waveformTip: 'Click waveform to seek and play',
+      rewindTip: 'Rewind 5s (←)',
+      forwardTip: 'Forward 5s (→)',
+      prevTip: 'Previous (↑)',
+      nextTip: 'Next (↓)',
+      playTip: 'Play (Space)',
+      pauseTip: 'Pause (Space)',
+      speedTip: 'Change speed',
+      progressTip: 'Playback progress',
+      volumeTip: 'Volume',
+      muteTip: 'Mute / Unmute',
+      spectrumTip: 'Real-time Spectrum',
+      loading: 'Loading…',
+      noSubfolders: '(No subfolders)',
+      parseFailed: 'Parse failed',
+      fileTooLarge: 'File too large',
+      unsupportedFormat: 'Unsupported format',
+      wmaNotSupportedCell: 'WMA not supported',
+      wmaTagTip: 'WMA may not be supported by this browser. Convert to MP3 / FLAC',
+      wmaTagTitle: 'WMA audio',
+      toastUnsupportedBrowser: 'Current browser does not support folder selection. Use Chrome / Edge 86+',
+      toastCannotOpenFolder: 'Cannot open folder: ',
+      toastWmaConvert: 'WMA decoding not supported. Convert to MP3 / FLAC',
+      toastAudioLoadFailed: 'Audio load failed: ',
+      toastPlayBlocked: 'Playback blocked. Please click play again.',
+      audioFilesCount: '{n} audio files',
+      filteredCount: 'Filtered {shown} / {total}',
+      moodCalm: 'Calm',
+      moodGentle: 'Gentle',
+      moodLight: 'Light',
+      moodPeaceful: 'Peaceful',
+      moodEnergetic: 'Energetic',
+      moodHappy: 'Happy',
+      moodPassionate: 'Passionate',
+      moodExcited: 'Excited',
+      moodIntense: 'Intense',
+    },
+    'zh-Hans': {
+      appName: '观澜音频浏览器',
+      accent: '主题色',
+      themeDark: '🌙 暗色',
+      themeLight: '☀️ 亮色',
+      language: '语言',
+      folders: '文件夹',
+      selectFolder: '📂 选择文件夹',
+      selectFolderTip: '选择一个本地文件夹',
+      emptyTreeHint: '点击上方「选择文件夹」加载文件夹内容',
+      noFolderSelected: '未选择文件夹',
+      searchPlaceholder: '搜索文件名 / 类型…',
+      colName: '文件名',
+      colType: '文件类型',
+      colDuration: '时长',
+      colAudioData: '音频数据',
+      colWaveform: '波形',
+      colBpm: 'BPM',
+      colMood: '情绪类型',
+      emptyListHint: '选择文件夹后，将在此列出其中的音频文件',
+      noAudioInFolder: '该文件夹下没有音频文件',
+      noAudioSelected: '未选择音频',
+      waveformTip: '点击波形跳到对应位置并播放',
+      rewindTip: '回退 5 秒 (←)',
+      forwardTip: '快进 5 秒 (→)',
+      prevTip: '上一首 (↑)',
+      nextTip: '下一首 (↓)',
+      playTip: '播放 (空格)',
+      pauseTip: '暂停 (空格)',
+      speedTip: '切换倍速',
+      progressTip: '播放进度',
+      volumeTip: '音量',
+      muteTip: '点击静音 / 取消静音',
+      spectrumTip: '实时频谱',
+      loading: '加载中…',
+      noSubfolders: '（无子文件夹）',
+      parseFailed: '解析失败',
+      fileTooLarge: '文件过大',
+      unsupportedFormat: '不支持的格式',
+      wmaNotSupportedCell: '浏览器不支持 WMA',
+      wmaTagTip: '当前浏览器可能不支持 WMA 播放，建议转换为 MP3 / FLAC',
+      wmaTagTitle: 'WMA 音频',
+      toastUnsupportedBrowser: '当前浏览器不支持选择文件夹，请使用 Chrome / Edge 86+',
+      toastCannotOpenFolder: '无法打开文件夹：',
+      toastWmaConvert: '当前浏览器不支持 WMA 解码，建议转换为 MP3 / FLAC',
+      toastAudioLoadFailed: '音频加载失败：',
+      toastPlayBlocked: '播放被拦截，请再次点击播放',
+      audioFilesCount: '{n} 个音频文件',
+      filteredCount: '筛选 {shown} / {total} 个',
+      moodCalm: '宁静',
+      moodGentle: '舒缓',
+      moodLight: '轻快',
+      moodPeaceful: '平和',
+      moodEnergetic: '活力',
+      moodHappy: '欢快',
+      moodPassionate: '激情',
+      moodExcited: '兴奋',
+      moodIntense: '狂热',
+    },
+    'zh-Hant': {
+      appName: '觀瀾音頻瀏覽器',
+      accent: '主題色',
+      themeDark: '🌙 暗色',
+      themeLight: '☀️ 亮色',
+      language: '語言',
+      folders: '資料夾',
+      selectFolder: '📂 選擇資料夾',
+      selectFolderTip: '選擇一個本機資料夾',
+      emptyTreeHint: '點擊上方「選擇資料夾」載入資料夾內容',
+      noFolderSelected: '未選擇資料夾',
+      searchPlaceholder: '搜尋檔名 / 類型…',
+      colName: '檔名',
+      colType: '檔案類型',
+      colDuration: '時長',
+      colAudioData: '音頻資料',
+      colWaveform: '波形',
+      colBpm: 'BPM',
+      colMood: '情緒類型',
+      emptyListHint: '選擇資料夾後，將在此列出其中的音頻檔案',
+      noAudioInFolder: '此資料夾中沒有音頻檔案',
+      noAudioSelected: '未選擇音頻',
+      waveformTip: '點擊波形跳到對應位置並播放',
+      rewindTip: '回退 5 秒 (←)',
+      forwardTip: '快進 5 秒 (→)',
+      prevTip: '上一首 (↑)',
+      nextTip: '下一首 (↓)',
+      playTip: '播放 (空格)',
+      pauseTip: '暫停 (空格)',
+      speedTip: '切換倍速',
+      progressTip: '播放進度',
+      volumeTip: '音量',
+      muteTip: '點擊靜音 / 取消靜音',
+      spectrumTip: '即時頻譜',
+      loading: '載入中…',
+      noSubfolders: '（無子資料夾）',
+      parseFailed: '解析失敗',
+      fileTooLarge: '檔案過大',
+      unsupportedFormat: '不支援的格式',
+      wmaNotSupportedCell: '瀏覽器不支援 WMA',
+      wmaTagTip: '目前瀏覽器可能不支援 WMA 播放，建議轉換為 MP3 / FLAC',
+      wmaTagTitle: 'WMA 音頻',
+      toastUnsupportedBrowser: '目前瀏覽器不支援選擇資料夾，請使用 Chrome / Edge 86+',
+      toastCannotOpenFolder: '無法開啟資料夾：',
+      toastWmaConvert: '目前瀏覽器不支援 WMA 解碼，建議轉換為 MP3 / FLAC',
+      toastAudioLoadFailed: '音頻載入失敗：',
+      toastPlayBlocked: '播放被封鎖，請再次點擊播放',
+      audioFilesCount: '{n} 個音頻檔案',
+      filteredCount: '篩選 {shown} / {total} 個',
+      moodCalm: '寧靜',
+      moodGentle: '舒緩',
+      moodLight: '輕快',
+      moodPeaceful: '平和',
+      moodEnergetic: '活力',
+      moodHappy: '歡快',
+      moodPassionate: '激情',
+      moodExcited: '興奮',
+      moodIntense: '狂熱',
+    },
+    ja: {
+      appName: 'WaveAtlas オーディオブラウザ',
+      accent: 'アクセントカラー',
+      themeDark: '🌙 ダーク',
+      themeLight: '☀️ ライト',
+      language: '言語',
+      folders: 'フォルダー',
+      selectFolder: '📂 フォルダーを選択',
+      selectFolderTip: 'ローカルフォルダーを選択',
+      emptyTreeHint: '上の「フォルダーを選択」をクリックしてフォルダーを読み込みます',
+      noFolderSelected: 'フォルダーが選択されていません',
+      searchPlaceholder: 'ファイル名 / 種類で検索…',
+      colName: 'ファイル名',
+      colType: '種類',
+      colDuration: '長さ',
+      colAudioData: 'オーディオデータ',
+      colWaveform: '波形',
+      colBpm: 'BPM',
+      colMood: 'ムード',
+      emptyListHint: 'フォルダーを選択すると、ここにオーディオファイルが表示されます',
+      noAudioInFolder: 'このフォルダーにはオーディオファイルがありません',
+      noAudioSelected: 'オーディオが選択されていません',
+      waveformTip: '波形をクリックしてシーク＆再生',
+      rewindTip: '5 秒戻る (←)',
+      forwardTip: '5 秒進む (→)',
+      prevTip: '前へ (↑)',
+      nextTip: '次へ (↓)',
+      playTip: '再生 (スペース)',
+      pauseTip: '一時停止 (スペース)',
+      speedTip: '再生速度を変更',
+      progressTip: '再生位置',
+      volumeTip: '音量',
+      muteTip: 'ミュート / ミュート解除',
+      spectrumTip: 'リアルタイムスペクトラム',
+      loading: '読み込み中…',
+      noSubfolders: '（サブフォルダーなし）',
+      parseFailed: '解析失敗',
+      fileTooLarge: 'ファイルが大きすぎます',
+      unsupportedFormat: '未対応の形式',
+      wmaNotSupportedCell: 'WMA 非対応',
+      wmaTagTip: 'このブラウザは WMA に対応していない可能性があります。MP3 / FLAC への変換を推奨',
+      wmaTagTitle: 'WMA オーディオ',
+      toastUnsupportedBrowser: 'このブラウザはフォルダー選択に対応していません。Chrome / Edge 86+ をご利用ください',
+      toastCannotOpenFolder: 'フォルダーを開けません：',
+      toastWmaConvert: 'WMA デコードは未対応です。MP3 / FLAC へ変換してください',
+      toastAudioLoadFailed: 'オーディオの読み込みに失敗：',
+      toastPlayBlocked: '再生がブロックされました。もう一度再生をクリックしてください',
+      audioFilesCount: '{n} 個のオーディオファイル',
+      filteredCount: '{shown} / {total} 件を表示',
+      moodCalm: '静穏',
+      moodGentle: '穏やか',
+      moodLight: '軽快',
+      moodPeaceful: '平穏',
+      moodEnergetic: '活力',
+      moodHappy: '楽しい',
+      moodPassionate: '情熱',
+      moodExcited: '興奮',
+      moodIntense: '熱狂',
+    },
+    ko: {
+      appName: 'WaveAtlas 오디오 브라우저',
+      accent: '강조 색상',
+      themeDark: '🌙 어둡게',
+      themeLight: '☀️ 밝게',
+      language: '언어',
+      folders: '폴더',
+      selectFolder: '📂 폴더 선택',
+      selectFolderTip: '로컬 폴더 선택',
+      emptyTreeHint: '위의 "폴더 선택"을 클릭하여 폴더 내용을 불러오세요',
+      noFolderSelected: '폴더가 선택되지 않았습니다',
+      searchPlaceholder: '파일 이름 / 종류 검색…',
+      colName: '파일 이름',
+      colType: '종류',
+      colDuration: '길이',
+      colAudioData: '오디오 데이터',
+      colWaveform: '파형',
+      colBpm: 'BPM',
+      colMood: '분위기',
+      emptyListHint: '폴더를 선택하면 오디오 파일이 여기에 표시됩니다',
+      noAudioInFolder: '이 폴더에는 오디오 파일이 없습니다',
+      noAudioSelected: '오디오가 선택되지 않았습니다',
+      waveformTip: '파형을 클릭하여 탐색 및 재생',
+      rewindTip: '5초 뒤로 (←)',
+      forwardTip: '5초 앞으로 (→)',
+      prevTip: '이전 (↑)',
+      nextTip: '다음 (↓)',
+      playTip: '재생 (스페이스)',
+      pauseTip: '일시정지 (스페이스)',
+      speedTip: '재생 속도 변경',
+      progressTip: '재생 진행',
+      volumeTip: '볼륨',
+      muteTip: '음소거 / 해제',
+      spectrumTip: '실시간 스펙트럼',
+      loading: '불러오는 중…',
+      noSubfolders: '(하위 폴더 없음)',
+      parseFailed: '분석 실패',
+      fileTooLarge: '파일이 너무 큼',
+      unsupportedFormat: '지원되지 않는 형식',
+      wmaNotSupportedCell: 'WMA 미지원',
+      wmaTagTip: '이 브라우저는 WMA를 지원하지 않을 수 있습니다. MP3 / FLAC 변환 권장',
+      wmaTagTitle: 'WMA 오디오',
+      toastUnsupportedBrowser: '이 브라우저는 폴더 선택을 지원하지 않습니다. Chrome / Edge 86+ 사용',
+      toastCannotOpenFolder: '폴더를 열 수 없습니다: ',
+      toastWmaConvert: 'WMA 디코딩 미지원. MP3 / FLAC로 변환하세요',
+      toastAudioLoadFailed: '오디오 로드 실패: ',
+      toastPlayBlocked: '재생이 차단되었습니다. 재생을 다시 클릭하세요',
+      audioFilesCount: '오디오 파일 {n}개',
+      filteredCount: '필터됨 {shown} / {total}',
+      moodCalm: '차분함',
+      moodGentle: '부드러움',
+      moodLight: '경쾌함',
+      moodPeaceful: '평온함',
+      moodEnergetic: '활기',
+      moodHappy: '즐거움',
+      moodPassionate: '열정',
+      moodExcited: '흥분',
+      moodIntense: '격렬함',
+    },
+    fr: {
+      appName: 'Navigateur audio WaveAtlas',
+      accent: "Couleur d'accent",
+      themeDark: '🌙 Sombre',
+      themeLight: '☀️ Clair',
+      language: 'Langue',
+      folders: 'Dossiers',
+      selectFolder: '📂 Choisir un dossier',
+      selectFolderTip: 'Sélectionner un dossier local',
+      emptyTreeHint: 'Cliquez sur « Choisir un dossier » ci-dessus pour charger le contenu',
+      noFolderSelected: 'Aucun dossier sélectionné',
+      searchPlaceholder: 'Rechercher nom / type…',
+      colName: 'Nom',
+      colType: 'Type',
+      colDuration: 'Durée',
+      colAudioData: 'Données audio',
+      colWaveform: "Forme d'onde",
+      colBpm: 'BPM',
+      colMood: 'Ambiance',
+      emptyListHint: 'Après avoir choisi un dossier, les fichiers audio seront listés ici',
+      noAudioInFolder: 'Aucun fichier audio dans ce dossier',
+      noAudioSelected: 'Aucun audio sélectionné',
+      waveformTip: "Cliquer sur la forme d'onde pour se déplacer et lire",
+      rewindTip: 'Reculer de 5 s (←)',
+      forwardTip: 'Avancer de 5 s (→)',
+      prevTip: 'Précédent (↑)',
+      nextTip: 'Suivant (↓)',
+      playTip: 'Lire (Espace)',
+      pauseTip: 'Pause (Espace)',
+      speedTip: 'Changer la vitesse',
+      progressTip: 'Progression de la lecture',
+      volumeTip: 'Volume',
+      muteTip: 'Couper / Rétablir le son',
+      spectrumTip: 'Spectre en temps réel',
+      loading: 'Chargement…',
+      noSubfolders: '(Aucun sous-dossier)',
+      parseFailed: "Échec de l'analyse",
+      fileTooLarge: 'Fichier trop volumineux',
+      unsupportedFormat: 'Format non pris en charge',
+      wmaNotSupportedCell: 'WMA non pris en charge',
+      wmaTagTip: 'Ce navigateur peut ne pas prendre en charge le WMA. Convertissez en MP3 / FLAC',
+      wmaTagTitle: 'Audio WMA',
+      toastUnsupportedBrowser: "Ce navigateur ne prend pas en charge la sélection de dossier. Utilisez Chrome / Edge 86+",
+      toastCannotOpenFolder: "Impossible d'ouvrir le dossier : ",
+      toastWmaConvert: 'Décodage WMA non pris en charge. Convertissez en MP3 / FLAC',
+      toastAudioLoadFailed: "Échec du chargement de l'audio : ",
+      toastPlayBlocked: 'Lecture bloquée. Cliquez à nouveau sur lecture.',
+      audioFilesCount: '{n} fichiers audio',
+      filteredCount: 'Filtré {shown} / {total}',
+      moodCalm: 'Calme',
+      moodGentle: 'Doux',
+      moodLight: 'Léger',
+      moodPeaceful: 'Paisible',
+      moodEnergetic: 'Énergique',
+      moodHappy: 'Joyeux',
+      moodPassionate: 'Passionné',
+      moodExcited: 'Excité',
+      moodIntense: 'Intense',
+    },
+    de: {
+      appName: 'WaveAtlas Audio-Browser',
+      accent: 'Akzentfarbe',
+      themeDark: '🌙 Dunkel',
+      themeLight: '☀️ Hell',
+      language: 'Sprache',
+      folders: 'Ordner',
+      selectFolder: '📂 Ordner auswählen',
+      selectFolderTip: 'Lokalen Ordner auswählen',
+      emptyTreeHint: 'Klicken Sie oben auf „Ordner auswählen“, um den Inhalt zu laden',
+      noFolderSelected: 'Kein Ordner ausgewählt',
+      searchPlaceholder: 'Name / Typ suchen…',
+      colName: 'Name',
+      colType: 'Typ',
+      colDuration: 'Dauer',
+      colAudioData: 'Audiodaten',
+      colWaveform: 'Wellenform',
+      colBpm: 'BPM',
+      colMood: 'Stimmung',
+      emptyListHint: 'Nach Auswahl eines Ordners werden hier Audiodateien aufgelistet',
+      noAudioInFolder: 'Keine Audiodateien in diesem Ordner',
+      noAudioSelected: 'Kein Audio ausgewählt',
+      waveformTip: 'Wellenform anklicken, um zu springen und abzuspielen',
+      rewindTip: '5 s zurück (←)',
+      forwardTip: '5 s vor (→)',
+      prevTip: 'Zurück (↑)',
+      nextTip: 'Weiter (↓)',
+      playTip: 'Wiedergabe (Leertaste)',
+      pauseTip: 'Pause (Leertaste)',
+      speedTip: 'Geschwindigkeit ändern',
+      progressTip: 'Wiedergabefortschritt',
+      volumeTip: 'Lautstärke',
+      muteTip: 'Stumm / Ton an',
+      spectrumTip: 'Echtzeit-Spektrum',
+      loading: 'Wird geladen…',
+      noSubfolders: '(Keine Unterordner)',
+      parseFailed: 'Analyse fehlgeschlagen',
+      fileTooLarge: 'Datei zu groß',
+      unsupportedFormat: 'Nicht unterstütztes Format',
+      wmaNotSupportedCell: 'WMA nicht unterstützt',
+      wmaTagTip: 'Dieser Browser unterstützt WMA möglicherweise nicht. Bitte in MP3 / FLAC umwandeln',
+      wmaTagTitle: 'WMA-Audio',
+      toastUnsupportedBrowser: 'Dieser Browser unterstützt keine Ordnerauswahl. Bitte Chrome / Edge 86+ verwenden',
+      toastCannotOpenFolder: 'Ordner kann nicht geöffnet werden: ',
+      toastWmaConvert: 'WMA-Dekodierung nicht unterstützt. Bitte in MP3 / FLAC umwandeln',
+      toastAudioLoadFailed: 'Audio konnte nicht geladen werden: ',
+      toastPlayBlocked: 'Wiedergabe blockiert. Bitte erneut auf Wiedergabe klicken.',
+      audioFilesCount: '{n} Audiodateien',
+      filteredCount: 'Gefiltert {shown} / {total}',
+      moodCalm: 'Ruhig',
+      moodGentle: 'Sanft',
+      moodLight: 'Leicht',
+      moodPeaceful: 'Gelassen',
+      moodEnergetic: 'Energisch',
+      moodHappy: 'Fröhlich',
+      moodPassionate: 'Leidenschaftlich',
+      moodExcited: 'Aufgeregt',
+      moodIntense: 'Intensiv',
+    },
+  };
+
+  const LANGUAGES = [
+    { code: 'en',      label: 'English' },
+    { code: 'zh-Hans', label: '简体中文' },
+    { code: 'zh-Hant', label: '繁體中文' },
+    { code: 'ja',      label: '日本語' },
+    { code: 'ko',      label: '한국어' },
+    { code: 'fr',      label: 'Français' },
+    { code: 'de',      label: 'Deutsch' },
+  ];
+
+  const APP_VERSION = 'V3.05';
+  let currentLang = 'zh-Hans';
+
+  function t(key) {
+    const pack = I18N[currentLang] || I18N.en;
+    return (pack && pack[key] != null) ? pack[key] : (I18N.en[key] != null ? I18N.en[key] : key);
+  }
+
+  /* ============================================================
+   * Constants
+   * ============================================================ */
+  const AUDIO_EXT = new Set([
+    'mp3','wav','ogg','oga','flac','m4a','m4b','aac','opus',
+    'weba','webm','aiff','aif','wma','ape','mid','midi'
+  ]);
+
+  const SPEEDS = [0.5, 0.75, 1, 1.25, 1.5, 2];
+  const PEAK_COUNT = 1600;
+  const MAX_DECODE_BYTES = 150 * 1024 * 1024;
+  const BPM_ANALYZE_SECONDS = 90;
+  const SPECTRUM_BARS = 24;
+
+  const els = {
+    tree:         document.getElementById('tree'),
+    fileList:     document.getElementById('fileList'),
+    currentPath:  document.getElementById('currentPath'),
+    fileCount:    document.getElementById('fileCount'),
+    themeBtn:     document.getElementById('themeBtn'),
+    accentPicker: document.getElementById('accentPicker'),
+    pickFolderBtn: document.getElementById('pickFolderBtn'),
+    listHead:     document.getElementById('listHead'),
+    searchInput:  document.getElementById('searchInput'),
+    muteBtn:      document.getElementById('muteBtn'),
+    volumeSlider: document.getElementById('volumeSlider'),
+    nowPlayingPath: document.getElementById('nowPlayingPath'),
+    topRewind:    document.getElementById('topRewind'),
+    topPrev:      document.getElementById('topPrev'),
+    topPlay:      document.getElementById('topPlay'),
+    topPause:     document.getElementById('topPause'),
+    topNext:      document.getElementById('topNext'),
+    topFwd:       document.getElementById('topFwd'),
+    topSpeed:     document.getElementById('topSpeed'),
+    progressSlider: document.getElementById('progressSlider'),
+    timeCurrent:  document.getElementById('timeCurrent'),
+    timeTotal:    document.getElementById('timeTotal'),
+    spectrumCanvas: document.getElementById('spectrumCanvas'),
+    langSelect:   document.getElementById('langSelect'),
+  };
+
+  let rootNode        = null;
+  let audioCtx        = null;
+  let activeAudio     = null;
+  let rowObserver     = null;
+  let activeFileNode  = null;
+  let currentDirNode  = null;
+  const allAudios     = new Set();
+
+  let visibleRows     = [];
+  let listToken       = 0;
+
+  let volume          = 1;
+  let muted           = false;
+  let isProgressDragging = false;
+  let speedIdx        = 2;
+
+  const sortState = { key: null, dir: 1 };
+  let resortScheduled = false;
+
+  const themeColors = { accent: '#4f8cff', wave: '#c9d1dc' };
+
+  let analyser = null;
+  let freqData = null;
+  let spectrumPeaks = null;
+  let spectrumRAF = null;
+  let spectrumGradient = null;
+  let spectrumGradKey = '';
+
+  let _wmaSupport = null;
+  function supportsWma() {
+    if (_wmaSupport !== null) return _wmaSupport;
+    try {
+      const a = document.createElement('audio');
+      _wmaSupport = !!(
+        a.canPlayType('audio/x-ms-wma') ||
+        a.canPlayType('audio/wma') ||
+        a.canPlayType('audio/x-wma')
+      );
+    } catch (e) {
+      _wmaSupport = false;
+    }
+    return _wmaSupport;
+  }
+
+  const fmtTime = (sec) => {
+    if (!isFinite(sec) || sec < 0) return '—';
+    const h = Math.floor(sec / 3600);
+    const m = Math.floor((sec % 3600) / 60);
+    const s = Math.floor(sec % 60);
+    if (h > 0) return `${h}:${String(m).padStart(2, '0')}:${String(s).padStart(2, '0')}`;
+    return `${m}:${String(s).padStart(2, '0')}`;
+  };
+  const fmtSize = (bytes) => {
+    if (!bytes && bytes !== 0) return '—';
+    if (bytes < 1024) return bytes + ' B';
+    if (bytes < 1024 * 1024) return (bytes / 1024).toFixed(1) + ' KB';
+    return (bytes / 1024 / 1024).toFixed(1) + ' MB';
+  };
+  const fmtSpeed = (s) => String(s) + 'x';
+  const getAudioContext = () => {
+    if (!audioCtx) {
+      const AC = window.AudioContext || window.webkitAudioContext;
+      audioCtx = new AC();
+    }
+    return audioCtx;
+  };
+
+  function ensureAnalyser() {
+    const ac = getAudioContext();
+    if (!analyser) {
+      analyser = ac.createAnalyser();
+      analyser.fftSize = 128;
+      analyser.smoothingTimeConstant = 0.72;
+      freqData = new Uint8Array(analyser.frequencyBinCount);
+    }
+    return analyser;
+  }
+
+  let toastTimer = null;
+  function toast(msg) {
+    const el = document.getElementById('toast');
+    if (!el) return;
+    el.textContent = msg;
+    el.classList.add('show');
+    clearTimeout(toastTimer);
+    toastTimer = setTimeout(() => el.classList.remove('show'), 2400);
+  }
+
+  function updateVolIcon() {
+    if (muted || volume === 0) els.muteBtn.textContent = '🔇';
+    else if (volume < 0.5) els.muteBtn.textContent = '🔈';
+    else els.muteBtn.textContent = '🔊';
+  }
+  function applyVolume() {
+    const v = muted ? 0 : volume;
+    allAudios.forEach(a => {
+      if (a._gainNode) {
+        try { a._gainNode.gain.value = v; } catch (e) {}
+      }
+    });
+  }
+  function persistVolume() {
+    try {
+      localStorage.setItem('audioBrowser.volume', String(volume));
+      localStorage.setItem('audioBrowser.muted', muted ? '1' : '0');
+    } catch (e) {}
+  }
+
+  /* ============================================================
+   * i18n application
+   * ============================================================ */
+  function updateThemeButton() {
+    const theme = document.documentElement.getAttribute('data-theme');
+    els.themeBtn.textContent = theme === 'dark' ? t('themeLight') : t('themeDark');
+  }
+
+  function refreshTreeLanguage() {
+    els.tree.querySelectorAll('.empty-tip.small[data-empty-kind]').forEach(el => {
+      if (el.dataset.emptyKind === 'error') {
+        const errText = el.dataset.emptyError || '';
+        el.textContent = '(' + errText + ')';
+      } else {
+        el.textContent = t('noSubfolders');
+      }
+    });
+    const rootEmpty = els.tree.querySelector('.empty-tip:not(.small)');
+    if (rootEmpty) rootEmpty.textContent = t('emptyTreeHint');
+  }
+
+  function refreshRowLanguage(row) {
+    const node = row._node;
+    if (!node) return;
+
+    if (row._typeTag && node.ext === 'wma') {
+      if (!supportsWma()) row._typeTag.title = t('wmaTagTip');
+      else row._typeTag.title = t('wmaTagTitle');
+    }
+    if (row._canvas) row._canvas.title = t('waveformTip');
+
+    if (node._decoded) {
+      fillDecodedRow(node, row);
+    } else if (node._decodeError) {
+      if (row._durCell) row._durCell.textContent = t('parseFailed');
+      if (row._dataCell) {
+        const msg = node._decodeError && node._decodeError.message === 'File too large, skipped'
+          ? t('fileTooLarge')
+          : (node.ext === 'wma' && !supportsWma() ? t('wmaNotSupportedCell') : t('unsupportedFormat'));
+        row._dataCell.textContent = msg;
+      }
+      if (row._bpmCell) {
+        row._bpmCell.textContent = '—';
+        row._bpmCell.classList.add('empty');
+      }
+      if (row._moodCell) row._moodCell.innerHTML = '<span class="meta-empty">—</span>';
+    } else {
+      if (row._bpmCell) {
+        row._bpmCell.textContent = '—';
+        row._bpmCell.classList.add('empty');
+      }
+      if (row._moodCell) row._moodCell.innerHTML = '<span class="meta-empty">—</span>';
+    }
+  }
+
+  function applyLanguage() {
+    document.documentElement.lang = currentLang;
+
+    document.querySelectorAll('[data-i18n]').forEach(el => {
+      el.textContent = t(el.dataset.i18n);
+    });
+    document.querySelectorAll('[data-i18n-title]').forEach(el => {
+      el.title = t(el.dataset.i18nTitle);
+    });
+    document.querySelectorAll('[data-i18n-placeholder]').forEach(el => {
+      el.placeholder = t(el.dataset.i18nPlaceholder);
+    });
+
+    document.title = t('appName') + ' ' + APP_VERSION;
+
+    updateThemeButton();
+
+    if (!currentDirNode) {
+      els.currentPath.textContent = t('noFolderSelected');
+      els.currentPath.title = '';
+    }
+
+    if (!activeFileNode) {
+      const textEl = els.nowPlayingPath.querySelector('.path-text');
+      if (textEl) textEl.textContent = t('noAudioSelected');
+      els.nowPlayingPath.title = '';
+    }
+
+    refreshTreeLanguage();
+    visibleRows.forEach(refreshRowLanguage);
+
+    if (els.searchInput.value.trim()) applyFilter();
+    else updateFileCount();
+  }
+
+  function buildLanguageSelector() {
+    els.langSelect.innerHTML = '';
+    LANGUAGES.forEach(l => {
+      const opt = document.createElement('option');
+      opt.value = l.code;
+      opt.textContent = l.label;
+      els.langSelect.appendChild(opt);
+    });
+    els.langSelect.value = currentLang;
+  }
+
+  els.langSelect.addEventListener('change', () => {
+    const code = els.langSelect.value;
+    if (!I18N[code]) return;
+    currentLang = code;
+    try { localStorage.setItem('audioBrowser.lang', code); } catch (e) {}
+    applyLanguage();
+  });
+
+  /* ============================================================
+   * Node model
+   * ============================================================ */
+  function makeDirNode(name, handle, parent, kind) {
+    const path = parent && parent.path ? parent.path + '/' + name : name;
+    return {
+      name, handle, parent, kind: kind || 'dir', path,
+      children: null, files: null, loaded: false, loading: false,
+      _expanded: false, _kidsBuilt: false,
+      _row: null, _kids: null, _caret: null, _depth: 0
+    };
+  }
+  function makeFileNode(name, handle, parent, size) {
+    const path = parent && parent.path ? parent.path + '/' + name : name;
+    return {
+      name, handle, parent, path, size: size || 0, kind: 'file',
+      ext: (name.split('.').pop() || '').toLowerCase(),
+      _audio: null, _audioLoading: null,
+      _blob: null, _blobUrl: null, _blobLoading: null,
+      _peaks: null, _progress: 0,
+      _canvas: null, _rowEl: null,
+      _decoded: null, _decoding: null, _decodeError: null
+    };
+  }
+
+  async function loadDir(node) {
+    if (node.loaded) return;
+    if (node.loading) {
+      return new Promise(resolve => {
+        const check = () => (node.loading ? setTimeout(check, 30) : resolve());
+        check();
+      });
+    }
+    node.loading = true;
+    try {
+      const entries = [];
+      for await (const [name, handle] of node.handle.entries()) {
+        entries.push([name, handle]);
+      }
+
+      const children = [];
+      const fileEntries = [];
+      for (const [name, handle] of entries) {
+        if (handle.kind === 'directory') {
+          children.push(makeDirNode(name, handle, node, 'dir'));
+        } else {
+          const ext = (name.split('.').pop() || '').toLowerCase();
+          if (AUDIO_EXT.has(ext)) fileEntries.push([name, handle]);
+        }
+      }
+
+      const files = await Promise.all(fileEntries.map(async ([name, handle]) => {
+        let size = 0;
+        try {
+          const f = await handle.getFile();
+          size = f.size;
+        } catch (e) {}
+        return makeFileNode(name, handle, node, size);
+      }));
+
+      children.sort((a, b) => a.name.localeCompare(b.name, 'en'));
+      files.sort((a, b) => a.name.localeCompare(b.name, 'en'));
+
+      node.children = children;
+      node.files = files;
+      node._error = null;
+    } catch (err) {
+      node._error = err.message || t('parseFailed');
+      node.children = node.children || [];
+      node.files = node.files || [];
+    } finally {
+      node.loading = false;
+      node.loaded = true;
+    }
+  }
+
+  /* ============================================================
+   * Folder picker & tree
+   * ============================================================ */
+  async function pickFolder() {
+    if (!window.showDirectoryPicker) {
+      toast(t('toastUnsupportedBrowser'));
+      return;
+    }
+    let dirHandle;
+    try {
+      dirHandle = await window.showDirectoryPicker({ mode: 'read' });
+    } catch (e) {
+      if (e && e.name === 'AbortError') return;
+      toast(t('toastCannotOpenFolder') + (e && e.message || e));
+      return;
+    }
+    await setupRoot(dirHandle);
+  }
+
+  async function setupRoot(dirHandle) {
+    if (rootNode) {
+      releaseAudiosIn(rootNode);
+      disposeBlobsIn(rootNode);
+    }
+    if (activeAudio) { try { activeAudio.pause(); } catch (e) {} activeAudio = null; }
+    resetList();
+
+    rootNode = makeDirNode(dirHandle.name, dirHandle, null, 'root');
+    await renderTree();
+  }
+
+  async function renderTree() {
+    els.tree.innerHTML = '';
+    if (!rootNode) return;
+    els.tree.appendChild(buildTreeNode(rootNode, 0));
+    await setExpanded(rootNode, true);
+    await selectDir(rootNode);
+  }
+
+  function buildTreeNode(node, depth) {
+    node._depth = depth;
+    const wrap = document.createElement('div');
+    wrap.className = 'node';
+
+    const row = document.createElement('div');
+    row.className = 'node-row';
+    row.style.paddingLeft = (6 + depth * 13) + 'px';
+
+    const caret = document.createElement('span');
+    caret.className = 'caret';
+    caret.textContent = '▶';
+
+    const icon = document.createElement('span');
+    icon.className = 'folder-icon';
+    icon.textContent = node.parent === null ? '📂' : '📁';
+
+    const nameEl = document.createElement('span');
+    nameEl.className = 'node-name';
+    nameEl.textContent = node.name;
+    nameEl.title = node.path || node.name;
+
+    row.append(caret, icon, nameEl);
+
+    const kids = document.createElement('div');
+    kids.className = 'node-children';
+    kids.style.display = 'none';
+    wrap.append(row, kids);
+
+    node._row = row; node._kids = kids; node._caret = caret;
+
+    caret.addEventListener('click', async (e) => {
+      e.stopPropagation();
+      if (!node._expanded) {
+        await setExpanded(node, true);
+        await selectDir(node);
+      } else {
+        await setExpanded(node, false);
+      }
+    });
+
+    row.addEventListener('click', async () => {
+      if (!node._expanded) await setExpanded(node, true);
+      await selectDir(node);
+    });
+
+    return wrap;
+  }
+
+  async function setExpanded(node, open) {
+    if (open) {
+      if (!node.loaded && !node.loading) {
+        const spinner = document.createElement('span');
+        spinner.className = 'node-loading';
+        spinner.textContent = t('loading');
+        node._row.appendChild(spinner);
+        await loadDir(node);
+        spinner.remove();
+      } else if (node.loading) {
+        await loadDir(node);
+        node._row.querySelector('.node-loading')?.remove();
+      }
+
+      if (!node._kidsBuilt) {
+        node._kidsBuilt = true;
+        node._kids.innerHTML = '';
+        const frag = document.createDocumentFragment();
+        for (const child of (node.children || [])) {
+          frag.appendChild(buildTreeNode(child, node._depth + 1));
+        }
+        if (!node.children || !node.children.length) {
+          const em = document.createElement('div');
+          em.className = 'empty-tip small';
+          em.style.paddingLeft = ((node._depth + 1) * 13 + 26) + 'px';
+          em.dataset.emptyKind = node._error ? 'error' : 'noSubfolders';
+          em.dataset.emptyError = node._error || '';
+          em.textContent = node._error ? ('(' + node._error + ')') : t('noSubfolders');
+          frag.appendChild(em);
+        }
+        node._kids.appendChild(frag);
+      }
+      node._kids.style.display = '';
+      node._caret.classList.add('open');
+      node._expanded = true;
+    } else {
+      node._kids.style.display = 'none';
+      node._caret.classList.remove('open');
+      node._expanded = false;
+    }
+  }
+
+  async function selectDir(node) {
+    const token = ++listToken;
+    await loadDir(node);
+    if (token !== listToken) return;
+
+    document.querySelectorAll('.node-row.active').forEach(el => el.classList.remove('active'));
+    if (node._row) node._row.classList.add('active');
+
+    currentDirNode = node;
+    renderFileNodes((node.files || []).slice(), node.path || node.name);
+  }
+
+  /* ============================================================
+   * Resource cleanup
+   * ============================================================ */
+  function releaseAudioOf(fileNode) {
+    const a = fileNode._audio;
+    if (!a) return;
+    try { a.pause(); } catch (e) {}
+    try { a.removeAttribute('src'); a.load(); } catch (e) {}
+
+    if (a._sourceNode) {
+      try { a._sourceNode.disconnect(); } catch (e) {}
+      a._sourceNode = null;
+    }
+    if (a._gainNode) {
+      try { a._gainNode.disconnect(); } catch (e) {}
+      a._gainNode = null;
+    }
+
+    allAudios.delete(a);
+    if (activeAudio === a) activeAudio = null;
+    fileNode._audio = null;
+    fileNode._audioLoading = null;
+    if (fileNode._rowEl) fileNode._rowEl.classList.remove('playing');
+  }
+  function releaseAudiosIn(node) {
+    if (!node) return;
+    if (node.files) node.files.forEach(releaseAudioOf);
+    if (node.children) node.children.forEach(releaseAudiosIn);
+  }
+  function disposeBlobsIn(node) {
+    if (!node) return;
+    if (node.files) {
+      for (const f of node.files) {
+        releaseAudioOf(f);
+        if (f._blobUrl) { URL.revokeObjectURL(f._blobUrl); f._blobUrl = null; }
+        f._blob = null;
+      }
+    }
+    if (node.children) node.children.forEach(disposeBlobsIn);
+  }
+
+  function resetList() {
+    if (rowObserver) { rowObserver.disconnect(); rowObserver = null; }
+    els.fileList.querySelectorAll('.file-row, .empty-tip').forEach(el => el.remove());
+    const tip = document.createElement('div');
+    tip.className = 'empty-tip';
+    tip.dataset.i18n = 'emptyListHint';
+    tip.textContent = t('emptyListHint');
+    els.fileList.appendChild(tip);
+    els.currentPath.textContent = t('noFolderSelected');
+    els.currentPath.title = '';
+    els.fileCount.textContent = '';
+    els.searchInput.value = '';
+    els.searchInput.disabled = true;
+    visibleRows = [];
+    currentDirNode = null;
+    clearActiveFile();
+  }
+
+  /* ============================================================
+   * Sorting
+   * ============================================================ */
+  function sortValueOf(node, key) {
+    switch (key) {
+      case 'name':     return (node.name || '').toLowerCase();
+      case 'ext':      return node.ext || '';
+      case 'duration': return node._decoded ? node._decoded.duration : null;
+      case 'data':     return node._decoded ? (node._decoded.bitrate || 0) : null;
+      case 'bpm':      return node._decoded ? (node._decoded.bpm || 0) : null;
+    }
+    return null;
+  }
+
+  function compareNodes(a, b, key, dir) {
+    const va = sortValueOf(a, key);
+    const vb = sortValueOf(b, key);
+    const an = (a.name || '').toLowerCase();
+    const bn = (b.name || '').toLowerCase();
+
+    if (va == null && vb == null) return an < bn ? -1 : an > bn ? 1 : 0;
+    if (va == null) return 1;
+    if (vb == null) return -1;
+
+    let c;
+    if (typeof va === 'string') c = va < vb ? -1 : va > vb ? 1 : 0;
+    else c = va - vb;
+
+    if (c !== 0) return c * dir;
+    return an < bn ? -dir : an > bn ? dir : 0;
+  }
+
+  function updateSortIndicators() {
+    els.listHead.querySelectorAll('[data-sort]').forEach(el => {
+      const key = el.dataset.sort;
+      el.classList.toggle('sorted', sortState.key === key);
+      const arrow = el.querySelector('.sort-arrow');
+      if (arrow) arrow.textContent = sortState.key === key ? (sortState.dir === 1 ? '▲' : '▼') : '';
+    });
+  }
+
+  function resortDomRows() {
+    if (!sortState.key || visibleRows.length < 2) return;
+
+    const sorted = visibleRows.slice().sort(
+      (ra, rb) => compareNodes(ra._node, rb._node, sortState.key, sortState.dir)
+    );
+
+    let changed = false;
+    for (let i = 0; i < sorted.length; i++) {
+      if (visibleRows[i] !== sorted[i]) { changed = true; break; }
+    }
+    if (!changed) return;
+
+    const frag = document.createDocumentFragment();
+    for (const r of sorted) frag.appendChild(r);
+    els.fileList.appendChild(frag);
+    visibleRows = sorted;
+  }
+
+  function scheduleResort() {
+    if (!sortState.key) return;
+    if (sortState.key !== 'duration' && sortState.key !== 'data' && sortState.key !== 'bpm') return;
+    if (resortScheduled) return;
+    resortScheduled = true;
+    requestAnimationFrame(() => {
+      resortScheduled = false;
+      resortDomRows();
+    });
+  }
+
+  els.listHead.addEventListener('click', (e) => {
+    const col = e.target.closest('[data-sort]');
+    if (!col) return;
+    const key = col.dataset.sort;
+    if (sortState.key === key) sortState.dir *= -1;
+    else { sortState.key = key; sortState.dir = 1; }
+    updateSortIndicators();
+    resortDomRows();
+  });
+
+  /* ============================================================
+   * List
+   * ============================================================ */
+  function renderFileNodes(fileNodes, title) {
+    releaseAudiosIn(rootNode);
+    if (rowObserver) { rowObserver.disconnect(); rowObserver = null; }
+
+    els.currentPath.textContent = title;
+    els.currentPath.title = title;
+
+    els.fileList.querySelectorAll('.file-row, .empty-tip').forEach(el => el.remove());
+
+    activeFileNode = null;
+    visibleRows = [];
+    els.searchInput.value = '';
+    els.searchInput.disabled = fileNodes.length === 0;
+    updatePlaybarState();
+    updateProgressUI();
+
+    if (!fileNodes.length) {
+      els.fileCount.textContent = '';
+      const tip = document.createElement('div');
+      tip.className = 'empty-tip';
+      tip.dataset.i18n = 'noAudioInFolder';
+      tip.textContent = t('noAudioInFolder');
+      els.fileList.appendChild(tip);
+      return;
+    }
+
+    let list = fileNodes.slice();
+    if (sortState.key) list.sort((a, b) => compareNodes(a, b, sortState.key, sortState.dir));
+
+    rowObserver = new IntersectionObserver((entries) => {
+      for (const entry of entries) {
+        if (!entry.isIntersecting) continue;
+        rowObserver.unobserve(entry.target);
+        startDecodeForRow(entry.target);
+      }
+    }, { root: els.fileList, rootMargin: '400px 0px' });
+
+    const frag = document.createDocumentFragment();
+    for (const f of list) frag.appendChild(buildRow(f));
+    els.fileList.appendChild(frag);
+
+    visibleRows = list.map(f => f._rowEl).filter(Boolean);
+    for (const row of visibleRows) rowObserver.observe(row);
+
+    updateFileCount();
+  }
+
+  function updateFileCount() {
+    const q = els.searchInput.value.trim();
+    if (!q) {
+      els.fileCount.textContent = visibleRows.length
+        ? t('audioFilesCount').replace('{n}', visibleRows.length)
+        : '';
+      return;
+    }
+    let shown = 0;
+    for (const row of visibleRows) if (row.style.display !== 'none') shown++;
+    els.fileCount.textContent = t('filteredCount')
+      .replace('{shown}', shown)
+      .replace('{total}', visibleRows.length);
+  }
+
+  function buildRow(node) {
+    const row = document.createElement('div');
+    row.className = 'file-row';
+    row._node = node;
+    node._rowEl = row;
+
+    const nameCell = document.createElement('div');
+    nameCell.className = 'cell name';
+    nameCell.textContent = node.name;
+    nameCell.title = node.path || node.name;
+
+    const typeCell = document.createElement('div');
+    typeCell.className = 'cell';
+    const tag = document.createElement('span');
+    tag.className = 'tag';
+    tag.textContent = (node.ext || '?').toUpperCase();
+    if (node.ext === 'wma') {
+      if (!supportsWma()) {
+        tag.classList.add('tag-warn');
+        tag.title = t('wmaTagTip');
+      } else {
+        tag.title = t('wmaTagTitle');
+      }
+    }
+    typeCell.appendChild(tag);
+    row._typeTag = tag;
+
+    const durCell = document.createElement('div');
+    durCell.className = 'cell dim';
+    durCell.textContent = '—';
+
+    const dataCell = document.createElement('div');
+    dataCell.className = 'cell small';
+    dataCell.textContent = '—';
+
+    const waveCell = document.createElement('div');
+    waveCell.className = 'cell wave-cell';
+    const canvas = document.createElement('canvas');
+    canvas.className = 'wave';
+    canvas.title = t('waveformTip');
+    waveCell.appendChild(canvas);
+    node._canvas = canvas;
+
+    canvas.addEventListener('click', async (e) => {
+      e.stopPropagation();
+      const rect = canvas.getBoundingClientRect();
+      if (!rect.width) return;
+      const ratio = Math.max(0, Math.min(1, (e.clientX - rect.left) / rect.width));
+      await playNode(node);
+      const a = node._audio;
+      if (!a) return;
+      if (isFinite(a.duration) && a.duration > 0) {
+        a.currentTime = ratio * a.duration;
+      } else {
+        a.addEventListener('loadedmetadata', () => {
+          if (isFinite(a.duration)) a.currentTime = ratio * a.duration;
+        }, { once: true });
+      }
+    });
+
+    const bpmCell = document.createElement('div');
+    bpmCell.className = 'cell bpm empty';
+    bpmCell.textContent = '—';
+
+    const moodCell = document.createElement('div');
+    moodCell.className = 'cell';
+    moodCell.innerHTML = '<span class="meta-empty">—</span>';
+
+    row.addEventListener('click', () => setActiveFile(node));
+    row.addEventListener('dblclick', (e) => {
+      e.preventDefault();
+      playNode(node);
+    });
+
+    row.append(nameCell, typeCell, durCell, dataCell, waveCell, bpmCell, moodCell);
+    row._durCell = durCell;
+    row._dataCell = dataCell;
+    row._bpmCell = bpmCell;
+    row._moodCell = moodCell;
+
+    if (node._decoded) fillDecodedRow(node, row);
+    return row;
+  }
+
+  /* ============================================================
+   * Playbar
+   * ============================================================ */
+  function setActiveFile(node) {
+    activeFileNode = node;
+    document.querySelectorAll('.file-row.active').forEach(el => el.classList.remove('active'));
+    if (node && node._rowEl) node._rowEl.classList.add('active');
+    updatePlaybarState();
+    updateProgressUI();
+  }
+
+  function clearActiveFile() {
+    activeFileNode = null;
+    document.querySelectorAll('.file-row.active').forEach(el => el.classList.remove('active'));
+    updatePlaybarState();
+    updateProgressUI();
+  }
+
+  function updatePlaybarState() {
+    const has = !!activeFileNode;
+    [els.topRewind, els.topPlay, els.topPause, els.topFwd].forEach(b => { b.disabled = !has; });
+    els.topPrev.disabled = !has || !nextNode(activeFileNode, -1);
+    els.topNext.disabled = !has || !nextNode(activeFileNode, 1);
+
+    const textEl = els.nowPlayingPath.querySelector('.path-text');
+    if (has) {
+      const p = activeFileNode.path || activeFileNode.name;
+      textEl.textContent = p;
+      els.nowPlayingPath.title = p;
+      els.nowPlayingPath.classList.add('has-file');
+    } else {
+      textEl.textContent = t('noAudioSelected');
+      els.nowPlayingPath.title = '';
+      els.nowPlayingPath.classList.remove('has-file');
+    }
+  }
+
+  function updateProgressUI() {
+    const node = activeFileNode;
+    const a = node && node._audio;
+
+    if (!a) {
+      els.progressSlider.value = 0;
+      els.timeCurrent.textContent = '0:00';
+      els.timeTotal.textContent = (node && node._decoded) ? fmtTime(node._decoded.duration) : '0:00';
+      return;
+    }
+    const dur = isFinite(a.duration) && a.duration > 0 ? a.duration : 0;
+    const cur = isFinite(a.currentTime) ? a.currentTime : 0;
+    if (!isProgressDragging) {
+      els.progressSlider.value = dur > 0 ? Math.round((cur / dur) * 1000) : 0;
+    }
+    els.timeCurrent.textContent = fmtTime(cur);
+    els.timeTotal.textContent = fmtTime(dur);
+  }
+
+  /* ============================================================
+   * Playback
+   * ============================================================ */
+  function getBlob(node) {
+    if (node._blob) return Promise.resolve(node._blob);
+    if (node._blobLoading) return node._blobLoading;
+
+    const p = (async () => {
+      const file = await node.handle.getFile();
+      node._blob = file;
+      node._blobUrl = URL.createObjectURL(file);
+      if (!node.size) node.size = file.size;
+      return file;
+    })();
+    node._blobLoading = p;
+    p.catch(() => {}).finally(() => { if (node._blobLoading === p) node._blobLoading = null; });
+    return p;
+  }
+
+  function ensureAudio(node) {
+    if (node._audio) return Promise.resolve(node._audio);
+    if (node._audioLoading) return node._audioLoading;
+
+    const p = (async () => {
+      await getBlob(node);
+      const audio = new Audio(node._blobUrl);
+      audio.preload = 'auto';
+      audio.playbackRate = SPEEDS[speedIdx];
+      audio.volume = 1;
+
+      try {
+        const ac = getAudioContext();
+        const an = ensureAnalyser();
+        const src = ac.createMediaElementSource(audio);
+        const gain = ac.createGain();
+        gain.gain.value = muted ? 0 : volume;
+
+        src.connect(gain);
+        gain.connect(ac.destination);
+        src.connect(an);
+
+        audio._sourceNode = src;
+        audio._gainNode = gain;
+      } catch (e) {
+        audio.volume = muted ? 0 : volume;
+      }
+
+      node._audio = audio;
+      allAudios.add(audio);
+      bindAudioEvents(node, audio);
+      return audio;
+    })();
+
+    node._audioLoading = p;
+    p.catch(() => {}).finally(() => { if (node._audioLoading === p) node._audioLoading = null; });
+    return p;
+  }
+
+  function bindAudioEvents(node, audio) {
+    const refreshIfActive = () => { if (node === activeFileNode) updateProgressUI(); };
+
+    audio.addEventListener('timeupdate', () => {
+      if (node._canvas && node._peaks) {
+        const p = audio.duration ? audio.currentTime / audio.duration : 0;
+        drawWaveThrottled(node._canvas, node._peaks, p);
+      }
+      refreshIfActive();
+    });
+
+    audio.addEventListener('loadedmetadata', refreshIfActive);
+
+    audio.addEventListener('play', () => {
+      if (activeAudio && activeAudio !== audio) {
+        try { activeAudio.pause(); } catch (e) {}
+      }
+      activeAudio = audio;
+      if (node._rowEl) {
+        node._rowEl.classList.add('playing');
+        scrollRowIntoView(node._rowEl);
+      }
+      if (activeFileNode !== node) setActiveFile(node);
+      else { updatePlaybarState(); updateProgressUI(); }
+      ensureSpectrumLoop();
+    });
+
+    audio.addEventListener('pause', () => {
+      if (node._rowEl) node._rowEl.classList.remove('playing');
+      refreshIfActive();
+    });
+
+    audio.addEventListener('ended', () => {
+      if (node._rowEl) node._rowEl.classList.remove('playing');
+      if (node._peaks && node._canvas) drawWave(node._canvas, node._peaks, 0);
+      refreshIfActive();
+      const nxt = nextNode(node, 1);
+      if (nxt) playNode(nxt);
+    });
+
+    audio.addEventListener('error', () => {
+      if (node.ext === 'wma' && !supportsWma()) {
+        toast(t('toastWmaConvert'));
+      } else {
+        toast(t('toastAudioLoadFailed') + node.name);
+      }
+    });
+  }
+
+  async function playNode(node) {
+    if (!node) return;
+    setActiveFile(node);
+
+    try {
+      const ac = getAudioContext();
+      if (ac.state === 'suspended') await ac.resume();
+    } catch (e) {}
+
+    let a;
+    try {
+      a = await ensureAudio(node);
+    } catch (err) {
+      if (node.ext === 'wma' && !supportsWma()) {
+        toast(t('toastWmaConvert'));
+      } else {
+        toast(t('toastAudioLoadFailed') + node.name);
+      }
+      return;
+    }
+    if (activeAudio && activeAudio !== a) {
+      try { activeAudio.pause(); } catch (e) {}
+    }
+    activeAudio = a;
+    try {
+      await a.play();
+    } catch (err) {
+      toast(t('toastPlayBlocked'));
+    }
+    ensureSpectrumLoop();
+  }
+
+  async function togglePlay() {
+    if (!activeFileNode) return;
+    const a = activeFileNode._audio;
+    if (a && !a.paused) {
+      a.pause();
+      return;
+    }
+    await playNode(activeFileNode);
+  }
+
+  async function seekBy(delta) {
+    if (!activeFileNode) return;
+    let a;
+    try { a = await ensureAudio(activeFileNode); } catch (e) { return; }
+    const dur = isFinite(a.duration) && a.duration > 0 ? a.duration : 0;
+    a.currentTime = Math.max(0, Math.min(dur || Infinity, (a.currentTime || 0) + delta));
+    if (activeFileNode._peaks && activeFileNode._canvas && dur > 0) {
+      drawWave(activeFileNode._canvas, activeFileNode._peaks, a.currentTime / dur);
+    }
+    updateProgressUI();
+  }
+
+  /* ============================================================
+   * Navigation order
+   * ============================================================ */
+  function currentOrderNodes() {
+    return visibleRows
+      .filter(r => r.style.display !== 'none')
+      .map(r => r._node);
+  }
+
+  function nextNode(node, step) {
+    if (!node) return null;
+    const arr = currentOrderNodes();
+    const i = arr.indexOf(node);
+    if (i < 0) return null;
+    const j = i + step;
+    if (j < 0 || j >= arr.length) return null;
+    return arr[j];
+  }
+
+  function scrollRowIntoView(row) {
+    if (!row || row.style.display === 'none') return;
+    const list = els.fileList;
+    const r = row.getBoundingClientRect();
+    const lr = list.getBoundingClientRect();
+    const headH = 34;
+    if (r.top < lr.top + headH) {
+      list.scrollTop -= (lr.top + headH - r.top) + 8;
+    } else if (r.bottom > lr.bottom) {
+      list.scrollTop += (r.bottom - lr.bottom) + 8;
+    }
+  }
+
+  /* ============================================================
+   * Player controls
+   * ============================================================ */
+  els.progressSlider.addEventListener('input', (e) => {
+    isProgressDragging = true;
+    const node = activeFileNode;
+    const dur = (node && node._audio && isFinite(node._audio.duration)) ? node._audio.duration
+              : (node && node._decoded ? node._decoded.duration : 0);
+    if (dur > 0) els.timeCurrent.textContent = fmtTime((Number(e.target.value) / 1000) * dur);
+  });
+
+  els.progressSlider.addEventListener('change', async (e) => {
+    isProgressDragging = false;
+    if (!activeFileNode) { updateProgressUI(); return; }
+    try {
+      const a = await ensureAudio(activeFileNode);
+      const dur = isFinite(a.duration) && a.duration > 0 ? a.duration : 0;
+      if (dur > 0) {
+        a.currentTime = (Number(e.target.value) / 1000) * dur;
+        if (activeFileNode._peaks && activeFileNode._canvas) {
+          drawWave(activeFileNode._canvas, activeFileNode._peaks, a.currentTime / dur);
+        }
+      }
+    } catch (err) {}
+    updateProgressUI();
+  });
+
+  els.topRewind.addEventListener('click', () => seekBy(-5));
+  els.topFwd.addEventListener('click', () => seekBy(5));
+  els.topPlay.addEventListener('click', () => togglePlay());
+  els.topPause.addEventListener('click', () => {
+    if (activeFileNode && activeFileNode._audio) activeFileNode._audio.pause();
+    else if (activeAudio) activeAudio.pause();
+  });
+  els.topPrev.addEventListener('click', () => {
+    const p = nextNode(activeFileNode, -1);
+    if (p) playNode(p);
+  });
+  els.topNext.addEventListener('click', () => {
+    const n = nextNode(activeFileNode, 1);
+    if (n) playNode(n);
+  });
+
+  function cycleSpeed() {
+    speedIdx = (speedIdx + 1) % SPEEDS.length;
+    const s = SPEEDS[speedIdx];
+    els.topSpeed.textContent = fmtSpeed(s);
+    allAudios.forEach(a => { a.playbackRate = s; });
+    try { localStorage.setItem('audioBrowser.speed', String(s)); } catch (e) {}
+  }
+  els.topSpeed.addEventListener('click', cycleSpeed);
+
+  /* ============================================================
+   * Mood mapping
+   * ============================================================ */
+  function bpmToMood(bpm) {
+    if (!bpm || bpm <= 0) return { key: null, cls: '' };
+    if (bpm < 60)  return { key: 'moodCalm',       cls: 'calm' };
+    if (bpm < 75)  return { key: 'moodGentle',     cls: 'gentle' };
+    if (bpm < 90)  return { key: 'moodLight',      cls: 'light' };
+    if (bpm < 105) return { key: 'moodPeaceful',   cls: 'peaceful' };
+    if (bpm < 120) return { key: 'moodEnergetic',  cls: 'energetic' };
+    if (bpm < 135) return { key: 'moodHappy',      cls: 'happy' };
+    if (bpm < 150) return { key: 'moodPassionate', cls: 'passionate' };
+    if (bpm < 165) return { key: 'moodExcited',    cls: 'excited' };
+    return { key: 'moodIntense', cls: 'intense' };
+  }
+
+  function renderBpmCell(row, bpm) {
+    if (!row._bpmCell) return;
+    if (bpm > 0) {
+      row._bpmCell.textContent = String(bpm);
+      row._bpmCell.classList.remove('empty');
+    } else {
+      row._bpmCell.textContent = '—';
+      row._bpmCell.classList.add('empty');
+    }
+  }
+
+  function renderMoodCell(row, bpm) {
+    if (!row._moodCell) return;
+    row._moodCell.innerHTML = '';
+    if (bpm > 0) {
+      const mood = bpmToMood(bpm);
+      const label = t(mood.key);
+      const span = document.createElement('span');
+      span.className = 'mood-tag mood-' + mood.cls;
+      span.textContent = label;
+      span.title = `BPM ${bpm} · ${label}`;
+      row._moodCell.appendChild(span);
+    } else {
+      const span = document.createElement('span');
+      span.className = 'meta-empty';
+      span.textContent = '—';
+      row._moodCell.appendChild(span);
+    }
+  }
+
+  function fillDecodedRow(node, row) {
+    const d = node._decoded;
+    if (!d) return;
+    node._peaks = d.peaks;
+
+    row._durCell.textContent = fmtTime(d.duration);
+
+    const srKHz = d.sampleRate / 1000;
+    const srText = (Number.isInteger(srKHz) ? srKHz : srKHz.toFixed(1)) + ' kHz';
+    const chText = d.channels + ' ch';
+    const kbpsText = d.bitrate ? d.bitrate + ' kbps' : '—';
+    const sizeText = node.size ? fmtSize(node.size) : '—';
+
+    row._dataCell.innerHTML = '';
+    const line1 = document.createElement('span');
+    line1.textContent = `${srText} · ${chText}`;
+    const line2 = document.createElement('span');
+    line2.textContent = `${kbpsText} · ${sizeText}`;
+    row._dataCell.append(line1, line2);
+
+    renderBpmCell(row, d.bpm || 0);
+    renderMoodCell(row, d.bpm || 0);
+
+    if (node._canvas) drawWave(node._canvas, d.peaks, 0);
+  }
+
+  /* ============================================================
+   * Decode queue
+   * ============================================================ */
+  const decodeQueue = [];
+  let decodingCount = 0;
+  const MAX_CONCURRENT = 2;
+
+  function queueDecode(task) {
+    return new Promise((resolve, reject) => {
+      decodeQueue.push({ task, resolve, reject });
+      pumpQueue();
+    });
+  }
+  function pumpQueue() {
+    while (decodingCount < MAX_CONCURRENT && decodeQueue.length) {
+      const job = decodeQueue.shift();
+      decodingCount++;
+      job.task().then(job.resolve, job.reject).finally(() => {
+        decodingCount--;
+        pumpQueue();
+      });
+    }
+  }
+
+  function decodeNode(node) {
+    if (node._decoded) return Promise.resolve(node._decoded);
+    if (node._decoding) return node._decoding;
+
+    if (node.size > MAX_DECODE_BYTES) {
+      const err = new Error('File too large, skipped');
+      node._decodeError = err;
+      return Promise.reject(err);
+    }
+
+    const p = queueDecode(async () => {
+      const blob = await getBlob(node);
+      const arrayBuffer = await blob.arrayBuffer();
+      const buffer = await getAudioContext().decodeAudioData(arrayBuffer);
+
+      const duration = buffer.duration;
+      const sampleRate = buffer.sampleRate;
+      const channels = buffer.numberOfChannels;
+      const peaks = computePeaks(buffer, PEAK_COUNT);
+      const bpm = computeBPM(buffer);
+      const bitrate = (duration > 0 && node.size)
+        ? Math.round((node.size * 8) / duration / 1000)
+        : 0;
+
+      return { duration, sampleRate, channels, peaks, bpm, bitrate };
+    });
+
+    node._decoding = p;
+    p.then(res => { node._decoded = res; })
+     .catch(err => { node._decodeError = err; })
+     .finally(() => { if (node._decoding === p) node._decoding = null; });
+
+    return p;
+  }
+
+  function computePeaks(buffer, count) {
+    const channels = [];
+    const chCount = Math.min(buffer.numberOfChannels, 2);
+    for (let c = 0; c < chCount; c++) channels.push(buffer.getChannelData(c));
+
+    const length = buffer.length;
+    const blockSize = Math.max(1, Math.floor(length / count));
+    const peaks = new Float32Array(count);
+
+    for (let i = 0; i < count; i++) {
+      const start = i * blockSize;
+      const end = Math.min(length, start + blockSize);
+      const step = Math.max(1, Math.floor((end - start) / 512));
+      let max = 0;
+      for (let ch = 0; ch < channels.length; ch++) {
+        const data = channels[ch];
+        for (let j = start; j < end; j += step) {
+          const v = data[j] < 0 ? -data[j] : data[j];
+          if (v > max) max = v;
+        }
+      }
+      peaks[i] = max;
+    }
+    return peaks;
+  }
+
+  /* ============================================================
+   * BPM detection
+   * ============================================================ */
+  function computeBPM(buffer) {
+    try {
+      const sr = buffer.sampleRate;
+      const chCount = Math.min(buffer.numberOfChannels, 2);
+      const chs = [];
+      for (let c = 0; c < chCount; c++) chs.push(buffer.getChannelData(c));
+
+      const maxLength = Math.min(buffer.length, Math.floor(sr * BPM_ANALYZE_SECONDS));
+      if (maxLength < sr * 2) return 0;
+
+      const frameSize = 1024;
+      const hop = 512;
+      const frames = Math.floor((maxLength - frameSize) / hop) + 1;
+      if (frames < 64) return 0;
+
+      const energy = new Float32Array(frames);
+      const innerStep = Math.max(1, Math.floor(frameSize / 256));
+      for (let i = 0; i < frames; i++) {
+        const start = i * hop;
+        const end = start + frameSize;
+        let sum = 0;
+        let count = 0;
+        for (let c = 0; c < chCount; c++) {
+          const d = chs[c];
+          for (let j = start; j < end; j += innerStep) {
+            sum += d[j] * d[j];
+            count++;
+          }
+        }
+        energy[i] = count ? sum / count : 0;
+      }
+
+      const onset = new Float32Array(frames);
+      for (let i = 1; i < frames; i++) {
+        const diff = energy[i] - energy[i - 1];
+        onset[i] = diff > 0 ? diff : 0;
+      }
+
+      let mean = 0;
+      for (let i = 0; i < frames; i++) mean += onset[i];
+      mean /= frames;
+      for (let i = 0; i < frames; i++) onset[i] -= mean;
+
+      const fps = sr / hop;
+      const minBPM = 60, maxBPM = 200;
+      const minLag = Math.max(1, Math.floor(fps * 60 / maxBPM));
+      const maxLag = Math.min(frames - 1, Math.ceil(fps * 60 / minBPM));
+      if (maxLag <= minLag) return 0;
+
+      let bestLag = 0;
+      let bestScore = -Infinity;
+      for (let lag = minLag; lag <= maxLag; lag++) {
+        const n = frames - lag;
+        let s = 0;
+        for (let i = 0; i < n; i++) s += onset[i] * onset[i + lag];
+        s /= n;
+        if (s > bestScore) { bestScore = s; bestLag = lag; }
+      }
+      if (bestLag <= 0 || bestScore <= 0) return 0;
+
+      let bpm = 60 * fps / bestLag;
+      while (bpm < 70) bpm *= 2;
+      while (bpm > 180) bpm /= 2;
+      return Math.round(bpm);
+    } catch (e) {
+      return 0;
+    }
+  }
+
+  function startDecodeForRow(row) {
+    const node = row._node;
+    if (!node) return;
+    decodeNode(node).then(() => {
+      if (!row.isConnected) return;
+      fillDecodedRow(node, row);
+      scheduleResort();
+    }).catch(err => {
+      if (!row.isConnected) return;
+      if (row._durCell) row._durCell.textContent = t('parseFailed');
+      if (row._dataCell) {
+        const msg = err && err.message === 'File too large, skipped'
+          ? t('fileTooLarge')
+          : (node.ext === 'wma' && !supportsWma() ? t('wmaNotSupportedCell') : t('unsupportedFormat'));
+        row._dataCell.textContent = msg;
+      }
+      if (row._bpmCell) { row._bpmCell.textContent = '—'; row._bpmCell.classList.add('empty'); }
+      if (row._moodCell) row._moodCell.innerHTML = '<span class="meta-empty">—</span>';
+      scheduleResort();
+    });
+  }
+
+  /* ============================================================
+   * Waveform drawing
+   * ============================================================ */
+  const rafPending = new WeakMap();
+
+  function drawWave(canvas, peaks, progress) {
+    const dpr = Math.min(window.devicePixelRatio || 1, 2);
+    const W = Math.max(1, Math.floor(canvas.clientWidth));
+    const H = Math.max(1, Math.floor(canvas.clientHeight));
+    if (canvas.width !== Math.floor(W * dpr) || canvas.height !== Math.floor(H * dpr)) {
+      canvas.width = Math.floor(W * dpr);
+      canvas.height = Math.floor(H * dpr);
+    }
+    const g = canvas.getContext('2d');
+    g.setTransform(dpr, 0, 0, dpr, 0, 0);
+    g.clearRect(0, 0, W, H);
+
+    canvas._peaks = peaks;
+    canvas._progress = progress;
+
+    const mid = H / 2;
+    const maxBar = Math.max(1, H / 2 - 1);
+    const n = peaks.length;
+    const playX = Math.round(Math.max(0, Math.min(1, progress)) * W);
+    const accent = themeColors.accent;
+    const base = themeColors.wave;
+    let currentStyle = '';
+
+    for (let x = 0; x < W; x++) {
+      const i0 = Math.floor((x * n) / W);
+      const i1 = Math.max(i0 + 1, Math.floor(((x + 1) * n) / W));
+      let p = 0;
+      for (let i = i0; i < i1 && i < n; i++) {
+        if (peaks[i] > p) p = peaks[i];
+      }
+      const barH = Math.max(0.8, p * maxBar);
+      const style = x < playX ? accent : base;
+      if (style !== currentStyle) { g.fillStyle = style; currentStyle = style; }
+      g.fillRect(x, mid - barH, 1, barH * 2);
+    }
+  }
+
+  function drawWaveThrottled(canvas, peaks, progress) {
+    rafPending.set(canvas, { peaks, progress });
+    if (canvas._rafId) return;
+    canvas._rafId = requestAnimationFrame(() => {
+      canvas._rafId = 0;
+      const p = rafPending.get(canvas);
+      if (p) drawWave(canvas, p.peaks, p.progress);
+    });
+  }
+
+  function redrawAllWaves() {
+    document.querySelectorAll('canvas.wave').forEach(c => {
+      if (c._peaks) drawWave(c, c._peaks, c._progress || 0);
+    });
+  }
+
+  /* ============================================================
+   * Spectrum drawing
+   * ============================================================ */
+  function initSpectrum() {
+    if (!els.spectrumCanvas) return;
+    spectrumPeaks = new Float32Array(SPECTRUM_BARS);
+    drawSpectrumFrame(false);
+  }
+
+  function ensureSpectrumLoop() {
+    if (spectrumRAF) return;
+    spectrumRAF = requestAnimationFrame(spectrumTick);
+  }
+
+  function spectrumTick() {
+    spectrumRAF = null;
+    const canvas = els.spectrumCanvas;
+    if (!canvas || !spectrumPeaks) return;
+
+    const playing = !!(activeAudio && !activeAudio.paused && analyser);
+
+    let hasPeak = false;
+    for (let i = 0; i < SPECTRUM_BARS; i++) {
+      if (spectrumPeaks[i] > 1.5) { hasPeak = true; break; }
+    }
+
+    if (playing && analyser && freqData) {
+      analyser.getByteFrequencyData(freqData);
+    }
+
+    drawSpectrumFrame(playing);
+
+    if (playing || hasPeak) {
+      spectrumRAF = requestAnimationFrame(spectrumTick);
+    }
+  }
+
+  function getSpectrumGradient(g, H, padTop, padBottom, dpr) {
+    const key = H + '|' + padTop + '|' + padBottom + '|' + dpr;
+    if (spectrumGradKey === key && spectrumGradient) return spectrumGradient;
+
+    const grad = g.createLinearGradient(0, H - padBottom, 0, padTop);
+    grad.addColorStop(0,    'rgba(255,255,255,0.96)');
+    grad.addColorStop(0.45, 'rgba(232,234,240,0.90)');
+    grad.addColorStop(0.75, 'rgba(196,201,212,0.82)');
+    grad.addColorStop(1,    'rgba(158,164,178,0.68)');
+
+    spectrumGradient = grad;
+    spectrumGradKey = key;
+    return grad;
+  }
+
+  function drawSpectrumFrame(playing) {
+    const canvas = els.spectrumCanvas;
+    if (!canvas || !spectrumPeaks) return;
+
+    const dpr = Math.min(window.devicePixelRatio || 1, 2);
+    const W = canvas.clientWidth;
+    const H = canvas.clientHeight;
+    if (!W || !H) return;
+
+    if (canvas.width !== Math.floor(W * dpr) || canvas.height !== Math.floor(H * dpr)) {
+      canvas.width = Math.floor(W * dpr);
+      canvas.height = Math.floor(H * dpr);
+    }
+    const g = canvas.getContext('2d');
+    g.setTransform(dpr, 0, 0, dpr, 0, 0);
+    g.clearRect(0, 0, W, H);
+
+    const padX = 5;
+    const padTop = 5;
+    const padBottom = 3;
+    const usableW = W - padX * 2;
+    const usableH = H - padTop - padBottom;
+    const gap = 1.2;
+    const barW = Math.max(1, (usableW - gap * (SPECTRUM_BARS - 1)) / SPECTRUM_BARS);
+
+    const accent = themeColors.accent;
+    const barGrad = getSpectrumGradient(g, H, padTop, padBottom, dpr);
+
+    const binCount = freqData ? freqData.length : 0;
+    const startBin = Math.floor(binCount * 0.03);
+    const endBin = Math.floor(binCount * 0.75);
+    const span = Math.max(1, endBin - startBin);
+
+    for (let i = 0; i < SPECTRUM_BARS; i++) {
+      let v = 0;
+      if (playing && freqData && binCount) {
+        const s = startBin + Math.floor(i * span / SPECTRUM_BARS);
+        const e = Math.max(s + 1, startBin + Math.floor((i + 1) * span / SPECTRUM_BARS));
+        let sum = 0, n = 0;
+        for (let j = s; j < e; j++) { sum += freqData[j]; n++; }
+        v = n ? (sum / n) / 255 : 0;
+        v = Math.pow(v, 1.4);
+        const centerFactor = 1 - Math.abs(i - (SPECTRUM_BARS - 1) / 2) / ((SPECTRUM_BARS - 1) / 2) * 0.25;
+        v *= centerFactor;
+      }
+
+      const barH = Math.max(1.2, v * usableH);
+      const x = padX + i * (barW + gap);
+      const y = H - padBottom - barH;
+
+      g.fillStyle = barGrad;
+      g.fillRect(x, y, barW, barH);
+
+      const prev = spectrumPeaks[i] || 0;
+      const newPeak = Math.max(barH, prev - 0.8);
+      spectrumPeaks[i] = newPeak;
+
+      if (newPeak > 2.5) {
+        g.fillStyle = accent;
+        const py = H - padBottom - newPeak - 2;
+        g.fillRect(x, py, barW, 1.8);
+      }
+    }
+  }
+
+  /* ============================================================
+   * Search filter
+   * ============================================================ */
+  function matchNode(node, q) {
+    if (node.name.toLowerCase().includes(q)) return true;
+    if (node.ext && node.ext.includes(q)) return true;
+    if (node._decoded && node._decoded.bpm > 0) {
+      const mood = bpmToMood(node._decoded.bpm);
+      if (mood.key) {
+        const label = t(mood.key);
+        if (label.toLowerCase().includes(q)) return true;
+      }
+    }
+    return false;
+  }
+
+  function applyFilter() {
+    const q = els.searchInput.value.trim().toLowerCase();
+    for (const row of visibleRows) {
+      row.style.display = (!q || matchNode(row._node, q)) ? '' : 'none';
+    }
+    updateFileCount();
+  }
+
+  els.searchInput.addEventListener('input', applyFilter);
+  els.searchInput.addEventListener('keydown', (e) => {
+    if (e.key === 'Escape') {
+      els.searchInput.value = '';
+      applyFilter();
+      els.searchInput.blur();
+    }
+  });
+
+  /* ============================================================
+   * Keyboard shortcuts
+   * ============================================================ */
+  document.addEventListener('keydown', (e) => {
+    const tgt = e.target;
+    if (tgt && (tgt.tagName === 'INPUT' || tgt.tagName === 'TEXTAREA' ||
+                tgt.tagName === 'SELECT' || tgt.isContentEditable)) return;
+    if (e.metaKey || e.ctrlKey || e.altKey) return;
+
+    switch (e.key) {
+      case ' ':
+        e.preventDefault();
+        togglePlay();
+        break;
+      case 'ArrowLeft':
+        e.preventDefault();
+        seekBy(-5);
+        break;
+      case 'ArrowRight':
+        e.preventDefault();
+        seekBy(5);
+        break;
+      case 'ArrowUp': {
+        e.preventDefault();
+        const p = nextNode(activeFileNode, -1);
+        if (p) setActiveFile(p);
+        break;
+      }
+      case 'ArrowDown': {
+        e.preventDefault();
+        const n = nextNode(activeFileNode, 1);
+        if (n) setActiveFile(n);
+        break;
+      }
+      case 'Enter':
+        if (activeFileNode) { e.preventDefault(); playNode(activeFileNode); }
+        break;
+      case '/':
+        if (!els.searchInput.disabled) { e.preventDefault(); els.searchInput.focus(); }
+        break;
+    }
+  });
+
+  /* ============================================================
+   * Theme
+   * ============================================================ */
+  function refreshThemeColors() {
+    const cs = getComputedStyle(document.documentElement);
+    themeColors.accent = (cs.getPropertyValue('--accent') || '#4f8cff').trim() || '#4f8cff';
+    themeColors.wave   = (cs.getPropertyValue('--wave')   || '#c9d1dc').trim() || '#c9d1dc';
+  }
+  function applyTheme(theme) {
+    document.documentElement.setAttribute('data-theme', theme);
+    updateThemeButton();
+    refreshThemeColors();
+    requestAnimationFrame(redrawAllWaves);
+    requestAnimationFrame(() => {
+      if (spectrumPeaks && els.spectrumCanvas) drawSpectrumFrame(false);
+    });
+  }
+  function applyAccent(color) {
+    document.documentElement.style.setProperty('--accent', color);
+    els.accentPicker.value = color;
+    refreshThemeColors();
+    requestAnimationFrame(redrawAllWaves);
+    requestAnimationFrame(() => {
+      if (spectrumPeaks && els.spectrumCanvas) drawSpectrumFrame(false);
+    });
+  }
+
+  /* ============================================================
+   * Events
+   * ============================================================ */
+  els.pickFolderBtn.addEventListener('click', pickFolder);
+
+  els.themeBtn.addEventListener('click', () => {
+    const next = document.documentElement.getAttribute('data-theme') === 'dark' ? 'light' : 'dark';
+    applyTheme(next);
+    try { localStorage.setItem('audioBrowser.theme', next); } catch (e) {}
+  });
+
+  els.accentPicker.addEventListener('input', (e) => {
+    applyAccent(e.target.value);
+    try { localStorage.setItem('audioBrowser.accent', e.target.value); } catch (e) {}
+  });
+
+  els.muteBtn.addEventListener('click', () => {
+    muted = !muted;
+    updateVolIcon();
+    applyVolume();
+    persistVolume();
+  });
+
+  els.volumeSlider.addEventListener('input', (e) => {
+    volume = Math.max(0, Math.min(1, Number(e.target.value) / 100));
+    if (volume > 0) muted = false;
+    updateVolIcon();
+    applyVolume();
+    persistVolume();
+  });
+
+  let resizeTimer = null;
+  window.addEventListener('resize', () => {
+    clearTimeout(resizeTimer);
+    resizeTimer = setTimeout(() => {
+      redrawAllWaves();
+      spectrumGradKey = '';
+      if (spectrumPeaks && els.spectrumCanvas) drawSpectrumFrame(false);
+    }, 120);
+  });
+
+  window.addEventListener('beforeunload', () => {
+    if (rootNode) disposeBlobsIn(rootNode);
+  });
+
+  /* ============================================================
+   * Init
+   * ============================================================ */
+  (function init() {
+    let savedTheme = 'light';
+    let savedAccent = '#4f8cff';
+    let savedLang = 'zh-Hans';
+
+    try {
+      savedTheme = localStorage.getItem('audioBrowser.theme') || 'light';
+      savedAccent = localStorage.getItem('audioBrowser.accent') || '#4f8cff';
+
+      const v = parseFloat(localStorage.getItem('audioBrowser.volume'));
+      if (isFinite(v) && v >= 0 && v <= 1) volume = v;
+
+      muted = localStorage.getItem('audioBrowser.muted') === '1';
+
+      const sp = parseFloat(localStorage.getItem('audioBrowser.speed'));
+      const idx = SPEEDS.indexOf(sp);
+      if (idx >= 0) speedIdx = idx;
+
+      const lg = localStorage.getItem('audioBrowser.lang');
+      if (lg && I18N[lg]) savedLang = lg;
+    } catch (e) {}
+
+    currentLang = savedLang;
+    buildLanguageSelector();
+
+    if (savedAccent) {
+      els.accentPicker.value = savedAccent;
+      document.documentElement.style.setProperty('--accent', savedAccent);
+    }
+
+    els.volumeSlider.value = String(Math.round(volume * 100));
+    updateVolIcon();
+    els.topSpeed.textContent = fmtSpeed(SPEEDS[speedIdx]);
+
+    applyTheme(savedTheme);
+    applyLanguage();
+    updateSortIndicators();
+    updatePlaybarState();
+    updateProgressUI();
+    initSpectrum();
+  })();
+
+})();
+</script>
+</body>
+</html>
