@@ -56,6 +56,10 @@ window.WA_I18N = {
   "q5h": "免费使用，以后怎么更新？",
   "q5p": "工具会持续迭代。重新下载最新版 HTML 文件、覆盖旧文件即可完成升级，没有任何迁移成本。",
   "ft.issues": "发现问题或有功能建议？欢迎在 <a href=\"https://github.com/rosslaw/waveatlas/issues\" title=\"GitHub Issues\">GitHub Issues</a> 留言",
+  "ft.pvPre": "本站总访问量 ",
+  "ft.pvPost": " 次",
+  "ft.uvPre": " · 访客数 ",
+  "ft.uvPost": " 人",
   "lb.hint": "点击任意位置或按 ESC 关闭"
 },
 
@@ -114,6 +118,10 @@ window.WA_I18N = {
   "q5h": "免費使用，以後怎麼更新？",
   "q5p": "工具會持續迭代。重新下載最新版 HTML 檔案、覆蓋舊檔即可完成升級，沒有任何遷移成本。",
   "ft.issues": "發現問題或有功能建議？歡迎在 <a href=\"https://github.com/rosslaw/waveatlas/issues\" title=\"GitHub Issues\">GitHub Issues</a> 留言",
+  "ft.pvPre": "本站總訪問量 ",
+  "ft.pvPost": " 次",
+  "ft.uvPre": " · 訪客數 ",
+  "ft.uvPost": " 人",
   "lb.hint": "點擊任意位置或按 ESC 關閉"
 },
 
@@ -172,6 +180,10 @@ window.WA_I18N = {
   "q5h": "It's free — how do I update?",
   "q5p": "The tool keeps improving. Just download the latest HTML file and overwrite the old one — zero migration cost.",
   "ft.issues": "Found a bug or have a suggestion? Let us know on <a href=\"https://github.com/rosslaw/waveatlas/issues\" title=\"GitHub Issues\">GitHub Issues</a>.",
+  "ft.pvPre": "Total ",
+  "ft.pvPost": " page views",
+  "ft.uvPre": " · ",
+  "ft.uvPost": " visitors",
   "lb.hint": "Click anywhere or press ESC to close"
 },
 
@@ -230,6 +242,10 @@ window.WA_I18N = {
   "q5h": "無料ですが、今後の更新は？",
   "q5p": "ツールは継続的に改善されます。最新の HTML ファイルを再ダウンロードして古いファイルに上書きするだけでアップグレード完了。移行作業は一切不要です。",
   "ft.issues": "不具合やご要望は <a href=\"https://github.com/rosslaw/waveatlas/issues\" title=\"GitHub Issues\">GitHub Issues</a> までお気軽にどうぞ。",
+  "ft.pvPre": "総アクセス数 ",
+  "ft.pvPost": " 回",
+  "ft.uvPre": " · 訪問者数 ",
+  "ft.uvPost": " 人",
   "lb.hint": "クリックまたは ESC で閉じる"
 },
 
@@ -288,6 +304,10 @@ window.WA_I18N = {
   "q5h": "무료인데, 업데이트는 어떻게 하나요?",
   "q5p": "도구는 꾸준히 개선됩니다. 최신 HTML 파일을 다시 다운로드해 기존 파일을 덮어쓰면 업그레이드가 완료됩니다. 이전 비용은 전혀 없습니다.",
   "ft.issues": "버그 제보나 기능 제안은 <a href=\"https://github.com/rosslaw/waveatlas/issues\" title=\"GitHub Issues\">GitHub Issues</a>에서 알려주세요.",
+  "ft.pvPre": "총 방문 수 ",
+  "ft.pvPost": " 회",
+  "ft.uvPre": " · 방문자 수 ",
+  "ft.uvPost": " 명",
   "lb.hint": "아무 곳이나 클릭 또는 ESC로 닫기"
 }
 
