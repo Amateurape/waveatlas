@@ -1,0 +1,34 @@
+<svg width="1200" height="630" viewBox="0 0 1200 630" xmlns="http://www.w3.org/2000/svg">
+  <title>WaveAtlas Audio Browser - Free, local, single-file audio waveform browser</title>
+  <rect x="0" y="0" width="1200" height="630" rx="0" fill="#161B26"/>
+  <line x1="620" y1="90" x2="620" y2="540" stroke="#262E3E" stroke-width="2"/>
+  <text x="90" y="230" font-family="Segoe UI, Microsoft YaHei, sans-serif" font-size="58" font-weight="600" fill="#E8EDF5">WaveAtlas</text>
+  <text x="90" y="278" font-family="Segoe UI, Microsoft YaHei, sans-serif" font-size="24" fill="#4F8CFF">Audio Browser</text>
+  <text x="90" y="352" font-family="Segoe UI, Microsoft YaHei, sans-serif" font-size="27" fill="#8A93A5">Free, local, single-file</text>
+  <text x="90" y="392" font-family="Segoe UI, Microsoft YaHei, sans-serif" font-size="27" fill="#8A93A5">audio waveform browser.</text>
+  <text x="90" y="472" font-family="Segoe UI, Microsoft YaHei, sans-serif" font-size="21" fill="#6C7689">Click-to-play · BPM · Mood tags</text>
+  <text x="90" y="528" font-family="Segoe UI, Microsoft YaHei, sans-serif" font-size="21" fill="#4F8CFF">waveatlas.top</text>
+  <g fill="#5E82B8">
+    <rect x="660" y="297" width="16" height="36" fill-opacity="0.2"/>
+    <rect x="688" y="281" width="16" height="68" fill-opacity="0.38"/>
+    <rect x="716" y="263" width="16" height="104" fill-opacity="0.6"/>
+    <rect x="744" y="245" width="16" height="140" fill-opacity="0.6"/>
+    <rect x="772" y="259" width="16" height="112" fill-opacity="0.6"/>
+    <rect x="800" y="277" width="16" height="76" fill-opacity="0.38"/>
+    <rect x="828" y="293" width="16" height="44" fill-opacity="0.2"/>
+    <rect x="856" y="303" width="16" height="24" fill-opacity="0.2"/>
+    <rect x="884" y="289" width="16" height="52" fill-opacity="0.38"/>
+    <rect x="912" y="271" width="16" height="88" fill-opacity="0.38"/>
+    <rect x="940" y="253" width="16" height="124" fill-opacity="0.6"/>
+    <rect x="968" y="241" width="16" height="148" fill-opacity="0.6"/>
+    <rect x="996" y="257" width="16" height="116" fill-opacity="0.6"/>
+    <rect x="1024" y="275" width="16" height="80" fill-opacity="0.38"/>
+    <rect x="1052" y="291" width="16" height="48" fill-opacity="0.2"/>
+    <rect x="1080" y="301" width="16" height="28" fill-opacity="0.2"/>
+    <rect x="1108" y="287" width="16" height="56" fill-opacity="0.38"/>
+    <rect x="1136" y="267" width="16" height="96" fill-opacity="0.38"/>
+    <rect x="1164" y="279" width="16" height="72" fill-opacity="0.38"/>
+    <rect x="1192" y="295" width="16" height="40" fill-opacity="0.2"/>
+  </g>
+  <line x1="640" y1="315" x2="1210" y2="315" stroke="#262E3E" stroke-width="2"/>
+</svg>
