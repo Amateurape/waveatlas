@@ -72,6 +72,20 @@ python tools/check_lang_pages.py    # 交叉校验：lang / title / canonical / 
 改了 `index.html` 或 `i18n.js` 之后**必须重跑**，否则各语言页会停留在旧内容。
 要新增语言：在 `i18n.js` 补一套完整字典 → 在 `tools/build_lang_pages.py` 的 `LANGS` 里加一行 → 重跑。
 
+## SEO self-audit · 站点自检
+
+检查的是**线上真实返回**（不是本地文件），覆盖五语页的 lang / title / description / canonical /
+hreflang 互指 / OG / JSON-LD / h1，robots.txt 与 sitemap.xml，图标与分享卡尺寸，全站内链死链，
+统计与验证代码是否还在，以及页面与图片体积。
+
+```bash
+python tools/seo_audit.py                 # 检查线上，简报写入 _local/seo-audit/
+python tools/seo_audit.py --no-save       # 只打印，不落盘
+python tools/seo_audit.py --out <目录>    # 简报写到指定目录
+```
+
+退出码 `0` = 无失败项；`1` = 有 FAIL，需要处理。建议每次改完页面推上去后跑一遍，外加每月一次定期体检。
+
 ## Feedback · 反馈
 
 Found a bug or have a suggestion? Open an [Issue](../../issues).
