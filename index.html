@@ -651,6 +651,7 @@ document.getElementById('year').textContent = new Date().getFullYear();
   }
 })();
 /* ====== 非中文访客提示条（仅根路径存在；只提示不跳转，避免影响收录） ====== */
+/* LANG-HINT-START 仅根路径需要，构建脚本会从子页中整段剥离 */
 (function () {
   const box = document.getElementById('langHint');
   if (!box || localStorage.getItem('wa-hint-off') === '1') return;
@@ -681,6 +682,7 @@ document.getElementById('year').textContent = new Date().getFullYear();
     localStorage.setItem('wa-hint-off', '1');
   });
 })();
+/* LANG-HINT-END */
 </script>
 </body>
 </html>

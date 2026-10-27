@@ -153,9 +153,9 @@ def check_page(lang_code, path, dicts):
         if actives != [lang_code]:
             errors.append(f"{tag} 切换器高亮错误: {actives}")
 
-    # 12. 提示条应已剥离
-    if "LANG-HINT" in doc or 'id="langHint"' in doc:
-        errors.append(f"{tag} 提示条残留（子页不应包含）")
+    # 12. 提示条（HTML + 配套 JS）应已全部剥离
+    if "LANG-HINT" in doc or "langHint" in doc:
+        errors.append(f"{tag} 提示条残留（子页不应包含 HTML 或配套 JS）")
 
 
 def main():

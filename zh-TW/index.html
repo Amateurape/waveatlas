@@ -642,36 +642,6 @@ document.getElementById('year').textContent = new Date().getFullYear();
   }
 })();
 /* ====== 非中文访客提示条（仅根路径存在；只提示不跳转，避免影响收录） ====== */
-(function () {
-  const box = document.getElementById('langHint');
-  if (!box || localStorage.getItem('wa-hint-off') === '1') return;
-  const HINTS = {
-    'zh-TW': ['這一頁也有繁體中文版本', '切換到繁體中文'],
-    'en': ['This page is available in English.', 'Switch to English'],
-    'ja': ['このページには日本語版があります。', '日本語版へ'],
-    'ko': ['이 페이지는 한국어 버전도 제공됩니다.', '한국어판으로']
-  };
-  const URLS = { 'zh-TW': '/zh-TW/', 'en': '/en/', 'ja': '/ja/', 'ko': '/ko/' };
-  let lang = null;
-  for (const l of (navigator.languages || [navigator.language || ''])) {
-    const s = l.toLowerCase();
-    if (s.startsWith('zh-tw') || s.startsWith('zh-hk') || s.startsWith('zh-hant')) { lang = 'zh-TW'; break; }
-    if (s.startsWith('zh')) { lang = null; break; }
-    if (s.startsWith('ja')) { lang = 'ja'; break; }
-    if (s.startsWith('ko')) { lang = 'ko'; break; }
-    if (s.startsWith('en')) { lang = 'en'; break; }
-  }
-  if (!lang) return;
-  document.getElementById('langHintMsg').textContent = HINTS[lang][0] + ' ';
-  const go = document.getElementById('langHintGo');
-  go.href = URLS[lang];
-  go.textContent = HINTS[lang][1] + ' →';
-  box.hidden = false;
-  document.getElementById('langHintX').addEventListener('click', function () {
-    box.hidden = true;
-    localStorage.setItem('wa-hint-off', '1');
-  });
-})();
 </script>
 </body>
 </html>

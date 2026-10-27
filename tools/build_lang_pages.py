@@ -223,8 +223,9 @@ def build(lang_dir: str, dicts: dict) -> str:
 
     doc = re.sub(r'(<div class="lang-switch"[^>]*>)(.*?)(</div>)', fix_switch, doc, count=1, flags=re.S)
 
-    # --- 8. 剥离「非中文访客提示条」（子页已是对应语言，不需要）---
+    # --- 8. 剥离「非中文访客提示条」的 HTML 与配套 JS（子页已是对应语言，不需要）---
     doc = re.sub(r"<!-- LANG-HINT-START.*?<!-- LANG-HINT-END -->\s*", "", doc, flags=re.S)
+    doc = re.sub(r"/\* LANG-HINT-START.*?/\* LANG-HINT-END \*/\s*", "", doc, flags=re.S)
 
     # --- 9. 生成标记 + 写盘 ---
     doc = doc.replace("<!DOCTYPE html>",
