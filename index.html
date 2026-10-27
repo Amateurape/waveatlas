@@ -6,6 +6,13 @@
 <meta name="description" content="观澜音频浏览器 WaveAtlas — 单文件、纯本地的音频波形浏览器。浏览文件夹中所有音频的波形图，点击即播，自动识别 BPM 与情绪。无需安装，无需联网。">
 <title>观澜音频浏览器 WaveAtlas — 单文件本地音频波形浏览器</title>
 <link rel="canonical" href="https://waveatlas.top/">
+<link rel="alternate" hreflang="zh-CN" href="https://waveatlas.top/">
+<link rel="alternate" hreflang="zh-TW" href="https://waveatlas.top/zh-TW/">
+<link rel="alternate" hreflang="en" href="https://waveatlas.top/en/">
+<link rel="alternate" hreflang="ja" href="https://waveatlas.top/ja/">
+<link rel="alternate" hreflang="ko" href="https://waveatlas.top/ko/">
+<link rel="alternate" hreflang="x-default" href="https://waveatlas.top/">
+<script>window.WA_LANG_FORCE="zh-CN";</script>
 <link rel="icon" type="image/svg+xml" href="/favicon.svg">
 <link rel="mask-icon" href="/favicon.svg" color="#4F8CFF">
 <link rel="apple-touch-icon" href="/apple-touch-icon.png">
@@ -140,9 +147,9 @@
   .btn-ghost:hover { border-color: #4f8cff; color: #fff !important; }
   .btn-sm { padding: 8px 18px; font-size: 14px; }
   .lang-switch { display: flex; align-items: center; margin-left: 4px; padding: 3px; border: 1px solid #2c3444; border-radius: 999px; background: rgba(20,24,36,.6); }
-  .lang-switch button { background: none; border: none; padding: 2px 9px; cursor: pointer; border-radius: 999px; font-size: 12.5px; line-height: 1.55; color: #6c7689; transition: color .15s, background .15s; }
-  .lang-switch button:hover { color: #fff; }
-  .lang-switch button.active { background: #4f8cff; color: #fff; font-weight: 600; }
+  .lang-switch button, .lang-switch a { background: none; border: none; padding: 2px 9px; cursor: pointer; border-radius: 999px; font-size: 12.5px; line-height: 1.55; color: #6c7689; transition: color .15s, background .15s; text-decoration: none; display: inline-block; }
+  .lang-switch button:hover, .lang-switch a:hover { color: #fff; }
+  .lang-switch button.active, .lang-switch a.active { background: #4f8cff; color: #fff; font-weight: 600; }
 
   /* ---------- hero ---------- */
   .hero { position: relative; padding: 110px 0 90px; overflow: hidden; }
@@ -267,6 +274,13 @@ var _hmt = _hmt || [];
 </head>
 <body>
 
+<!-- LANG-HINT-START 仅根路径显示；构建脚本会从各语言子页中剥离此段 -->
+<div id="langHint" hidden style="background:#141824;border-bottom:1px solid #212839;font-size:13px;text-align:center;padding:9px 40px;color:#aeb6c6;position:relative;">
+  <span id="langHintMsg"></span><a id="langHintGo" href="/en/" style="color:#7fb0ff;font-weight:600;text-decoration:none;margin-left:6px;"></a>
+  <button id="langHintX" aria-label="Close" style="position:absolute;right:10px;top:50%;transform:translateY(-50%);background:none;border:none;color:#6c7689;font-size:17px;line-height:1;cursor:pointer;padding:0 6px;">×</button>
+</div>
+<!-- LANG-HINT-END -->
+
 <nav>
   <div class="nav-inner">
     <a class="logo" href="#"><span class="dot"></span>观澜 <span style="color:#7d8aa5;font-weight:500;">WaveAtlas</span></a>
@@ -276,11 +290,11 @@ var _hmt = _hmt || [];
     <a class="link" href="#download" data-i18n="nav.download">下载</a>
     <a class="link" href="#faq" data-i18n="nav.faq">FAQ</a>
     <div class="lang-switch" id="langSwitch" aria-label="Language">
-      <button data-lang="zh-CN" title="简体中文">简</button>
-      <button data-lang="zh-TW" title="繁體中文">繁</button>
-      <button data-lang="en" title="English">EN</button>
-      <button data-lang="ja" title="日本語">日</button>
-      <button data-lang="ko" title="한국어">한</button>
+      <a href="/" hreflang="zh-CN" data-lang="zh-CN" title="简体中文" class="active">简</a>
+      <a href="/zh-TW/" hreflang="zh-TW" data-lang="zh-TW" title="繁體中文">繁</a>
+      <a href="/en/" hreflang="en" data-lang="en" title="English">EN</a>
+      <a href="/ja/" hreflang="ja" data-lang="ja" title="日本語">日</a>
+      <a href="/ko/" hreflang="ko" data-lang="ko" title="한국어">한</a>
     </div>
     <a class="btn btn-primary btn-sm" href="WaveAtlasAudioBrowser_v3.05.html" target="_blank" data-i18n="nav.try">在线试用</a>
   </div>
@@ -625,11 +639,47 @@ document.getElementById('year').textContent = new Date().getFullYear();
     localStorage.setItem('wa-lang', lang);
     document.querySelectorAll('#langSwitch button').forEach(b => b.classList.toggle('active', b.dataset.lang === lang));
   }
-  document.querySelectorAll('#langSwitch button').forEach(b => {
-    b.addEventListener('click', () => applyLang(b.dataset.lang));
+  /* 每个独立语言页在页面顶部用 window.WA_LANG_FORCE 声明自己是哪种语言。
+     声明优先于浏览器探测 —— 否则 Googlebot（Accept-Language: en）抓 / 时会看到被替换成英文的内容，
+     与 hreflang 声明矛盾。未声明时才回退到本地偏好 / 浏览器语言。 */
+  const FORCED = window.WA_LANG_FORCE;
+  if (FORCED && LANGS.indexOf(FORCED) >= 0) {
+    applyLang(FORCED);
+  } else {
+    const saved = localStorage.getItem('wa-lang');
+    applyLang(saved && LANGS.indexOf(saved) >= 0 ? saved : detect());
+  }
+})();
+/* ====== 非中文访客提示条（仅根路径存在；只提示不跳转，避免影响收录） ====== */
+(function () {
+  const box = document.getElementById('langHint');
+  if (!box || localStorage.getItem('wa-hint-off') === '1') return;
+  const HINTS = {
+    'zh-TW': ['這一頁也有繁體中文版本', '切換到繁體中文'],
+    'en': ['This page is available in English.', 'Switch to English'],
+    'ja': ['このページには日本語版があります。', '日本語版へ'],
+    'ko': ['이 페이지는 한국어 버전도 제공됩니다.', '한국어판으로']
+  };
+  const URLS = { 'zh-TW': '/zh-TW/', 'en': '/en/', 'ja': '/ja/', 'ko': '/ko/' };
+  let lang = null;
+  for (const l of (navigator.languages || [navigator.language || ''])) {
+    const s = l.toLowerCase();
+    if (s.startsWith('zh-tw') || s.startsWith('zh-hk') || s.startsWith('zh-hant')) { lang = 'zh-TW'; break; }
+    if (s.startsWith('zh')) { lang = null; break; }
+    if (s.startsWith('ja')) { lang = 'ja'; break; }
+    if (s.startsWith('ko')) { lang = 'ko'; break; }
+    if (s.startsWith('en')) { lang = 'en'; break; }
+  }
+  if (!lang) return;
+  document.getElementById('langHintMsg').textContent = HINTS[lang][0] + ' ';
+  const go = document.getElementById('langHintGo');
+  go.href = URLS[lang];
+  go.textContent = HINTS[lang][1] + ' →';
+  box.hidden = false;
+  document.getElementById('langHintX').addEventListener('click', function () {
+    box.hidden = true;
+    localStorage.setItem('wa-hint-off', '1');
   });
-  const saved = localStorage.getItem('wa-lang');
-  applyLang(saved && LANGS.indexOf(saved) >= 0 ? saved : detect());
 })();
 </script>
 </body>

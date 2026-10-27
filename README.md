@@ -50,6 +50,28 @@ No installation. No internet needed. Nothing ever leaves your computer.
 
 无需安装，无需联网，音频数据一个字节都不会离开你的电脑。
 
+## 维护多语言落地页 · Maintaining the multilingual landing page
+
+落地页五种语言各占一个独立 URL（而不是靠 JS 切换），这样每个语种才能被搜索引擎单独收录：
+
+| 语言 | URL | 生成方式 |
+|---|---|---|
+| 简体中文 | `/` | `index.html`，**手工维护的母版** |
+| 繁体中文 | `/zh-TW/` | 构建脚本生成 |
+| 英语 | `/en/` | 构建脚本生成 |
+| 日语 | `/ja/` | 构建脚本生成 |
+| 韩语 | `/ko/` | 构建脚本生成 |
+
+`en/` `ja/` `ko/` `zh-TW/` 目录下的文件**不要直接编辑**，改动会在下次构建时被覆盖：
+
+```bash
+python tools/build_lang_pages.py    # 重新生成四个语言页 + sitemap.xml（含 hreflang 互指）
+python tools/check_lang_pages.py    # 交叉校验：lang / title / canonical / hreflang / 译文是否落盘 / 路径
+```
+
+改了 `index.html` 或 `i18n.js` 之后**必须重跑**，否则各语言页会停留在旧内容。
+要新增语言：在 `i18n.js` 补一套完整字典 → 在 `tools/build_lang_pages.py` 的 `LANGS` 里加一行 → 重跑。
+
 ## Feedback · 反馈
 
 Found a bug or have a suggestion? Open an [Issue](../../issues).
