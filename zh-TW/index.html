@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<!-- 由 tools/build_lang_pages.py 自动生成，请勿直接编辑；改动请改 index.html 或 i18n.js 后重跑脚本 -->
+<!-- 由 tools/build_lang_pages.py 自动生成，请勿直接编辑；改动请改 tools/template.html 或 i18n.js 后重跑脚本 -->
 <html lang="zh-TW">
 <head>
 <meta charset="UTF-8">
@@ -7,9 +7,9 @@
 <meta name="description" content="觀瀾音頻瀏覽器 WaveAtlas — 單檔案、純本機的音訊波形瀏覽器。瀏覽資料夾中所有音訊的波形圖，點擊即播，自動偵測 BPM 與情緒。無需安裝，無需連網。">
 <title>觀瀾音頻瀏覽器 WaveAtlas — 單檔案本機音訊波形瀏覽器</title>
 <link rel="canonical" href="https://waveatlas.top/zh-TW/">
-<link rel="alternate" hreflang="zh-CN" href="https://waveatlas.top/">
+<link rel="alternate" hreflang="en" href="https://waveatlas.top/">
+<link rel="alternate" hreflang="zh-CN" href="https://waveatlas.top/zh-CN/">
 <link rel="alternate" hreflang="zh-TW" href="https://waveatlas.top/zh-TW/">
-<link rel="alternate" hreflang="en" href="https://waveatlas.top/en/">
 <link rel="alternate" hreflang="ja" href="https://waveatlas.top/ja/">
 <link rel="alternate" hreflang="ko" href="https://waveatlas.top/ko/">
 <link rel="alternate" hreflang="x-default" href="https://waveatlas.top/">
@@ -147,10 +147,16 @@
   .btn-ghost { background: transparent; color: #cfd6e4 !important; border: 1px solid #2c3444; }
   .btn-ghost:hover { border-color: #4f8cff; color: #fff !important; }
   .btn-sm { padding: 8px 18px; font-size: 14px; }
-  .lang-switch { display: flex; align-items: center; margin-left: 4px; padding: 3px; border: 1px solid #2c3444; border-radius: 999px; background: rgba(20,24,36,.6); }
-  .lang-switch button, .lang-switch a { background: none; border: none; padding: 2px 9px; cursor: pointer; border-radius: 999px; font-size: 12.5px; line-height: 1.55; color: #6c7689; transition: color .15s, background .15s; text-decoration: none; display: inline-block; }
-  .lang-switch button:hover, .lang-switch a:hover { color: #fff; }
-  .lang-switch button.active, .lang-switch a.active { background: #4f8cff; color: #fff; font-weight: 600; }
+  .lang-switch { position: relative; margin-left: 4px; }
+  .lang-current { display: inline-flex; align-items: center; gap: 6px; background: rgba(20,24,36,.6); border: 1px solid #2c3444; border-radius: 999px; padding: 7px 13px; cursor: pointer; color: #cfd6e4; font-size: 13px; line-height: 1.2; transition: border-color .15s, color .15s; }
+  .lang-current:hover { border-color: #4f8cff; color: #fff; }
+  .lang-caret { font-size: 10px; color: #6c7689; transition: transform .18s; }
+  .lang-switch.open .lang-caret { transform: rotate(180deg); }
+  .lang-menu { position: absolute; top: calc(100% + 8px); right: 0; min-width: 148px; background: #141a26; border: 1px solid #2c3444; border-radius: 10px; padding: 6px; display: none; z-index: 80; }
+  .lang-switch.open .lang-menu { display: block; }
+  .lang-menu a { display: block; padding: 8px 12px; border-radius: 6px; color: #a9b2c2; text-decoration: none; font-size: 13px; white-space: nowrap; transition: background .15s, color .15s; }
+  .lang-menu a:hover { background: #1c2433; color: #fff; }
+  .lang-menu a.active { background: #4f8cff; color: #fff; }
 
   /* ---------- hero ---------- */
   .hero { position: relative; padding: 110px 0 90px; overflow: hidden; }
@@ -314,11 +320,14 @@ var _hmt = _hmt || [];
     <a class="link" href="#download" data-i18n="nav.download">下載</a>
     <a class="link" href="#faq" data-i18n="nav.faq">FAQ</a>
     <div class="lang-switch" id="langSwitch" aria-label="Language">
-      <a href="/" hreflang="zh-CN" data-lang="zh-CN" title="简体中文">简</a>
-      <a href="/zh-TW/" hreflang="zh-TW" data-lang="zh-TW" class="active" title="繁體中文">繁</a>
-      <a href="/en/" hreflang="en" data-lang="en" title="English">EN</a>
-      <a href="/ja/" hreflang="ja" data-lang="ja" title="日本語">日</a>
-      <a href="/ko/" hreflang="ko" data-lang="ko" title="한국어">한</a>
+      <button class="lang-current" id="langCurrent" aria-haspopup="true" aria-expanded="false"><span data-i18n="nav.lang">語言</span> <span class="lang-caret">▾</span></button>
+      <div class="lang-menu" id="langMenu">
+        <a href="/" hreflang="en" data-lang="en" title="English">English</a>
+        <a href="/zh-CN/" hreflang="zh-CN" data-lang="zh-CN" title="简体中文">简体中文</a>
+        <a href="/zh-TW/" hreflang="zh-TW" data-lang="zh-TW" class="active" title="繁體中文">繁體中文</a>
+        <a href="/ja/" hreflang="ja" data-lang="ja" title="日本語">日本語</a>
+        <a href="/ko/" hreflang="ko" data-lang="ko" title="한국어">한국어</a>
+      </div>
     </div>
     <a class="btn btn-primary btn-sm" href="/WaveAtlasAudioBrowser_v3.05.html" target="_blank" data-i18n="nav.try">線上試用</a>
   </div>
@@ -679,7 +688,7 @@ document.getElementById('year').textContent = new Date().getFullYear();
     const lb = document.querySelector('.lb-hint');
     if (lb) lb.textContent = dict['lb.hint'];
     localStorage.setItem('wa-lang', lang);
-    document.querySelectorAll('#langSwitch button').forEach(b => b.classList.toggle('active', b.dataset.lang === lang));
+    document.querySelectorAll('#langMenu a').forEach(a => a.classList.toggle('active', a.dataset.lang === lang));
   }
   /* 每个独立语言页在页面顶部用 window.WA_LANG_FORCE 声明自己是哪种语言。
      声明优先于浏览器探测 —— 否则 Googlebot（Accept-Language: en）抓 / 时会看到被替换成英文的内容，
@@ -692,7 +701,22 @@ document.getElementById('year').textContent = new Date().getFullYear();
     applyLang(saved && LANGS.indexOf(saved) >= 0 ? saved : detect());
   }
 })();
-/* ====== 非中文访客提示条（仅根路径存在；只提示不跳转，避免影响收录） ====== */
+/* ====== 语言下拉菜单交互：点击展开/收起、点外部关闭、ESC 关闭 ====== */
+(function () {
+  const wrap = document.getElementById('langSwitch');
+  const btn = document.getElementById('langCurrent');
+  if (!wrap || !btn) return;
+  function close() { wrap.classList.remove('open'); btn.setAttribute('aria-expanded', 'false'); }
+  btn.addEventListener('click', function (e) {
+    e.stopPropagation();
+    const willOpen = !wrap.classList.contains('open');
+    wrap.classList.toggle('open', willOpen);
+    btn.setAttribute('aria-expanded', willOpen ? 'true' : 'false');
+  });
+  document.addEventListener('click', function (e) { if (!wrap.contains(e.target)) close(); });
+  document.addEventListener('keydown', function (e) { if (e.key === 'Escape') close(); });
+})();
+/* ====== 中文访客提示条（仅英文首页存在；只提示不跳转，避免影响收录） ====== */
 </script>
 </body>
 </html>

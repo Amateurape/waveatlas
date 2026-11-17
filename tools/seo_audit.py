@@ -40,14 +40,14 @@ UA = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like 
 
 # 语言 → 路径。顺序即简报中的展示顺序。
 PAGES = [
-    ("zh-CN", "/", "zh-CN"),
+    ("en", "/", "en"),
+    ("zh-CN", "/zh-CN/", "zh-CN"),
     ("zh-TW", "/zh-TW/", "zh-TW"),
-    ("en", "/en/", "en"),
     ("ja", "/ja/", "ja"),
     ("ko", "/ko/", "ko"),
 ]
 EXPECT_HREFLANG = {
-    "zh-CN": "/", "zh-TW": "/zh-TW/", "en": "/en/", "ja": "/ja/", "ko": "/ko/",
+    "en": "/", "zh-CN": "/zh-CN/", "zh-TW": "/zh-TW/", "ja": "/ja/", "ko": "/ko/",
     "x-default": "/",
 }
 GA4_ID = "G-RTZL87DHM4"
@@ -387,7 +387,7 @@ def audit_links(base: str, docs: dict) -> None:
                     u = u[len(base):] or "/"
                 if not u.startswith("/"):
                     # 子目录页面里出现相对路径 = 必然 404
-                    if code != "zh-CN":
+                    if code != "en":
                         dead.append(f"[{code}] 相对路径 {u}（子目录下会 404）")
                     continue
                 seen.add(u.split("#")[0] or "/")
@@ -415,7 +415,7 @@ def audit_links(base: str, docs: dict) -> None:
 
 def audit_tags(base: str, docs: dict) -> None:
     sec = "统计与验证"
-    home = docs.get("zh-CN", "")
+    home = docs.get("en", "")
     if not home:
         rec(sec, "首页统计代码", "FAIL", "首页抓取失败，跳过")
         return
@@ -441,7 +441,7 @@ def audit_tags(base: str, docs: dict) -> None:
             rec(sec, "GSC 验证", "WARN", "meta 与验证文件均不可用，GSC 所有权可能失效")
 
     # 统计代码在子页是否也带上了（本方案子页共用 head，应一致）
-    missing = [c for c, d in docs.items() if BAIDU_HM not in d and c != "zh-CN"]
+    missing = [c for c, d in docs.items() if BAIDU_HM not in d and c != "en"]
     if missing:
         rec(sec, "子页统计覆盖", "WARN", f"缺百度统计：{', '.join(missing)}")
     elif len(docs) > 1:
@@ -452,7 +452,7 @@ def audit_tags(base: str, docs: dict) -> None:
 
 def audit_weight(base: str, docs: dict) -> None:
     sec = "体积体检"
-    home = docs.get("zh-CN", "")
+    home = docs.get("en", "")
     if not home:
         return
     rec(sec, "首页 HTML", "OK" if len(home.encode()) < 150_000 else "WARN",

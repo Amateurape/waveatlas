@@ -4,7 +4,7 @@ window.WA_I18N = {
 "zh-CN": {
   "doc.title": "观澜音频浏览器 WaveAtlas — 单文件本地音频波形浏览器",
   "meta.desc": "观澜音频浏览器 WaveAtlas — 单文件、纯本地的音频波形浏览器。浏览文件夹中所有音频的波形图，点击即播，自动识别 BPM 与情绪。无需安装，无需联网。",
-  "nav.features": "功能", "nav.privacy": "隐私", "nav.download": "下载", "nav.faq": "FAQ", "nav.try": "在线试用",
+  "nav.features": "功能", "nav.privacy": "隐私", "nav.download": "下载", "nav.faq": "FAQ", "nav.try": "在线试用", "nav.lang": "语言",
   "hero.badge": "<span class=\"free\">完全免费</span> · 轻量 · 无需联网 · 即开即用",
   "hero.title": "观澜音频浏览器", "hero.subtitle": "WaveAtlas Audio Browser",
   "hero.tagline": "视觉化呈现文件夹中的音频文件，节奏、响度起伏一眼可读<b style=\"display:block;margin-top:14px;font-size:25px;\">点击波形任意位置，即点即播，任意跳转</b>",
@@ -67,7 +67,7 @@ window.WA_I18N = {
 "zh-TW": {
   "doc.title": "觀瀾音頻瀏覽器 WaveAtlas — 單檔案本機音訊波形瀏覽器",
   "meta.desc": "觀瀾音頻瀏覽器 WaveAtlas — 單檔案、純本機的音訊波形瀏覽器。瀏覽資料夾中所有音訊的波形圖，點擊即播，自動偵測 BPM 與情緒。無需安裝，無需連網。",
-  "nav.features": "功能", "nav.privacy": "隱私", "nav.download": "下載", "nav.faq": "FAQ", "nav.try": "線上試用",
+  "nav.features": "功能", "nav.privacy": "隱私", "nav.download": "下載", "nav.faq": "FAQ", "nav.try": "線上試用", "nav.lang": "語言",
   "hero.badge": "<span class=\"free\">完全免費</span> · 輕量 · 無需連網 · 即開即用",
   "hero.title": "觀瀾音頻瀏覽器", "hero.subtitle": "WaveAtlas Audio Browser",
   "hero.tagline": "視覺化呈現資料夾中的音訊檔案，節奏、響度起伏一眼可讀<b style=\"display:block;margin-top:14px;font-size:25px;\">點擊波形任意位置，即點即播，任意跳轉</b>",
@@ -130,7 +130,7 @@ window.WA_I18N = {
 "en": {
   "doc.title": "WaveAtlas Audio Browser — Single-File Local Audio Waveform Browser",
   "meta.desc": "WaveAtlas Audio Browser — a single-file, fully local audio waveform browser. Browse waveforms for every audio file in a folder, click to play, with automatic BPM and mood detection. No install, no internet needed.",
-  "nav.features": "Features", "nav.privacy": "Privacy", "nav.download": "Download", "nav.faq": "FAQ", "nav.try": "Try Online",
+  "nav.features": "Features", "nav.privacy": "Privacy", "nav.download": "Download", "nav.faq": "FAQ", "nav.try": "Try Online", "nav.lang": "Language",
   "hero.badge": "<span class=\"free\">100% Free</span> · Lightweight · Works Offline · Ready to Run",
   "hero.title": "WaveAtlas Audio Browser", "hero.subtitle": "观澜音频浏览器",
   "hero.tagline": "See every audio file in your folder as a waveform — rhythm and loudness at a glance.<b style=\"display:block;margin-top:14px;font-size:25px;\">Click anywhere on a waveform to play from that spot, and switch tracks seamlessly.</b>",
@@ -193,7 +193,7 @@ window.WA_I18N = {
 "ja": {
   "doc.title": "WaveAtlas Audio Browser（観瀾）— 単一ファイルのローカル波形オーディオブラウザ",
   "meta.desc": "WaveAtlas Audio Browser — 単一ファイルで完全ローカルの波形オーディオブラウザ。フォルダ内の全オーディオの波形を閲覧、クリックで即再生、BPM とムードを自動判定。インストールもネット接続も不要。",
-  "nav.features": "機能", "nav.privacy": "プライバシー", "nav.download": "ダウンロード", "nav.faq": "FAQ", "nav.try": "ブラウザで試す",
+  "nav.features": "機能", "nav.privacy": "プライバシー", "nav.download": "ダウンロード", "nav.faq": "FAQ", "nav.try": "ブラウザで試す", "nav.lang": "言語",
   "hero.badge": "<span class=\"free\">完全無料</span> · 軽量 · オフライン OK · すぐ使える",
   "hero.title": "WaveAtlas Audio Browser", "hero.subtitle": "観瀾オーディオブラウザ",
   "hero.tagline": "フォルダ内のオーディオを波形で可視化。リズムも音量の起伏もひと目で把握。<b style=\"display:block;margin-top:14px;font-size:25px;\">波形の任意の場所をクリックして即再生、自由にシーク。</b>",
@@ -256,7 +256,7 @@ window.WA_I18N = {
 "ko": {
   "doc.title": "WaveAtlas Audio Browser(觀瀾) — 단일 파일 로컬 오디오 파형 브라우저",
   "meta.desc": "WaveAtlas Audio Browser — 단일 파일, 완전 로컬 오디오 파형 브라우저. 폴더 안 모든 오디오의 파형을 탐색하고, 클릭하여 재생하며, BPM과 무드를 자동 인식합니다. 설치도 인터넷도 필요 없습니다.",
-  "nav.features": "기능", "nav.privacy": "개인정보", "nav.download": "다운로드", "nav.faq": "FAQ", "nav.try": "온라인 체험",
+  "nav.features": "기능", "nav.privacy": "개인정보", "nav.download": "다운로드", "nav.faq": "FAQ", "nav.try": "온라인 체험", "nav.lang": "언어",
   "hero.badge": "<span class=\"free\">완전 무료</span> · 경량 · 오프라인 사용 · 바로 실행",
   "hero.title": "WaveAtlas Audio Browser", "hero.subtitle": "관란 오디오 브라우저",
   "hero.tagline": "폴더 속 오디오 파일을 파형으로 시각화합니다. 리듬과 음량 변화를 한눈에.<b style=\"display:block;margin-top:14px;font-size:25px;\">파형 아무 곳이나 클릭하면 바로 재생, 자유롭게 이동합니다.</b>",

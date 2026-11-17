@@ -17,8 +17,10 @@ from pathlib import Path
 
 ROOT = Path(__file__).resolve().parent.parent
 SITE = "https://waveatlas.top"
-LANGS = {"zh-TW": "zh-TW", "en": "en", "ja": "ja", "ko": "ko_KR" and "ko"}
-ALL = {"zh-CN": "https://waveatlas.top/"}
+HOME_LANG = "en"
+# 语言 key -> 目录；en 为首页（根目录），zh-CN 为新增子目录
+LANGS = {"zh-CN": "zh-CN", "zh-TW": "zh-TW", "ja": "ja", "ko": "ko"}
+ALL = {"en": f"{SITE}/"}
 for k in LANGS:
     ALL[LANGS[k]] = f"{SITE}/{k}/"
 
@@ -90,7 +92,7 @@ def check_page(lang_code, path, dicts):
 
     # 5. hreflang 六条互指
     hl = dict(re.findall(r'<link rel="alternate" hreflang="([^"]+)" href="([^"]+)"', doc))
-    expect = {"zh-CN": f"{SITE}/", "zh-TW": f"{SITE}/zh-TW/", "en": f"{SITE}/en/",
+    expect = {"en": f"{SITE}/", "zh-CN": f"{SITE}/zh-CN/", "zh-TW": f"{SITE}/zh-TW/",
               "ja": f"{SITE}/ja/", "ko": f"{SITE}/ko/", "x-default": f"{SITE}/"}
     for k, v in expect.items():
         if hl.get(k) != v:
@@ -132,9 +134,13 @@ def check_page(lang_code, path, dicts):
     if bad:
         errors.append(f"{tag} {len(bad)} 处译文未落盘: {bad[:5]}")
 
-    # 9. 是否残留中文（en/ja/ko 页）
-    if lang_code in ("en", "ja", "ko"):
-        leftover = len(re.findall(r"[\u4e00-\u9fff]", re.sub(r"<script.*?</script>|<style.*?</style>", "", doc, flags=re.S)))
+    # 9. 是否残留中文（zh-CN 页本身是中文，不检查；其余语言页检查）
+    #    英文首页含给中文访客的提示条（中文文案属预期），先剥掉提示条再统计
+    if lang_code in ("en", "ja", "ko", "zh-TW"):
+        body = re.sub(r"<script.*?</script>|<style.*?</style>", "", doc, flags=re.S)
+        if lang_code == "en":
+            body = re.sub(r"<!-- LANG-HINT-START.*?<!-- LANG-HINT-END -->", "", body, flags=re.S)
+        leftover = len(re.findall(r"[\u4e00-\u9fff]", body))
         if leftover > 0:
             warnings.append(f"{tag} 仍含 {leftover} 个中文字符（品牌名/注释属正常，需人工确认）")
 
@@ -144,33 +150,29 @@ def check_page(lang_code, path, dicts):
     if rel:
         errors.append(f"{tag} 存在相对路径（子页会 404）: {sorted(set(rel))[:5]}")
 
-    # 11. 切换器高亮唯一且正确
-    m = re.search(r'(<div class="lang-switch"[^>]*>)(.*?)(</div>)', doc, re.S)
-    if not m:
-        errors.append(f"{tag} 找不到语言切换器")
+    # 11. 切换器高亮唯一且正确（下拉菜单里 data-lang="xx" class="active"）
+    if 'id="langSwitch"' not in doc or 'id="langMenu"' not in doc:
+        errors.append(f"{tag} 找不到语言下拉切换器")
     else:
-        actives = re.findall(r'data-lang="([^"]+)"\s+class="active"', m.group(2))
+        actives = re.findall(r'data-lang="([^"]+)"\s+class="active"', doc)
         if actives != [lang_code]:
             errors.append(f"{tag} 切换器高亮错误: {actives}")
 
-    # 12. 提示条（HTML + 配套 JS）应已全部剥离
-    if "LANG-HINT" in doc or "langHint" in doc:
-        errors.append(f"{tag} 提示条残留（子页不应包含 HTML 或配套 JS）")
+    # 12. 提示条：英文首页应保留（提示中文访客），其他语言页应剥离
+    has_hint = "LANG-HINT" in doc or "langHint" in doc
+    if lang_code == "en":
+        if not has_hint:
+            errors.append(f"{tag} 英文首页缺少中文访客提示条")
+    elif has_hint:
+        errors.append(f"{tag} 提示条残留（非首页不应包含 HTML 或配套 JS）")
 
 
 def main():
     dicts = load_dicts()
-    # 根页单独检查（语言固定 zh-CN）
-    root = (ROOT / "index.html").read_text(encoding="utf-8")
-    m = re.search(r'window\.WA_LANG_FORCE="([^"]*)"', root)
-    if not m or m.group(1) != "zh-CN":
-        errors.append("[zh-CN] 根页 WA_LANG_FORCE 不是 zh-CN")
-    hl = dict(re.findall(r'<link rel="alternate" hreflang="([^"]+)" href="([^"]+)"', root))
-    if len(hl) != 6:
-        errors.append(f"[zh-CN] hreflang 数量 {len(hl)}，应为 6")
-    if "i18n.js" not in root:
-        errors.append("[zh-CN] 根页缺少 i18n.js 引用")
+    # 英文首页（根目录 index.html）走完整检查
+    check_page("en", ROOT / "index.html", dicts)
 
+    # 其余四语页在各自子目录
     for lang_dir, lang_code in LANGS.items():
         p = ROOT / lang_dir / "index.html"
         if not p.exists():
@@ -178,7 +180,16 @@ def main():
             continue
         check_page(lang_code, p, dicts)
 
-    print(f"检查完成：{len(LANGS) + 1} 个页面")
+    # 旧 /en/ 跳转页应存在且指向首页
+    legacy = ROOT / "en" / "index.html"
+    if not legacy.exists():
+        errors.append("[/en/] 旧链接跳转页不存在")
+    else:
+        page = legacy.read_text(encoding="utf-8")
+        if 'url=/' not in page and 'url="/"' not in page:
+            errors.append("[/en/] 跳转页未指向首页 /")
+
+    print(f"检查完成：{len(LANGS) + 2} 个页面（含首页与旧链接跳转页）")
     for w in warnings:
         print("  ⚠ " + w)
     if errors:

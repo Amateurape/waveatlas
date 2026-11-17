@@ -3,22 +3,23 @@
 """
 WaveAtlas 落地页多语言页面构建脚本
 =================================
-把 index.html（简中母版）+ i18n.js（译文字典）烘焙成各语言独立页面：
+把 tools/template.html（简中母版，手工维护）+ i18n.js（译文字典）烘焙成各语言独立页面：
 
-    /            -> zh-CN（母版，手工维护）
-    /zh-TW/      -> 繁中
-    /en/         -> 英语
-    /ja/         -> 日语
-    /ko/         -> 韩语
+    /            -> en    英语（首页，主要受众）
+    /zh-CN/      -> zh-CN 简体中文
+    /zh-TW/      -> zh-TW 繁体中文
+    /ja/         -> ja    日语
+    /ko/         -> ko    韩语
+    /en/         -> 自动跳转到 /（兼容旧链接，避免 404）
 
 每个输出页都做到：<html lang> 正确、title/description/OG/Twitter 已翻译、
-canonical 指向自己、hreflang 五语互指、结构化数据 url/inLanguage 正确、
-资源路径改根绝对（子目录下不会 404）、语言切换器高亮当前语言。
+canonical 指向自己、hreflang 五语互指 + x-default 指向英文首页、
+结构化数据 url/inLanguage 正确、资源路径改根绝对、语言切换器高亮当前语言。
 
 为什么必须烘焙而不是靠 JS 切换：搜索引擎只读服务端返回的 HTML，
 JS 注入的译文对收录无效。这是多语言 SEO 的前提。
 
-用法（改完 index.html 或 i18n.js 后必须重跑）：
+用法（改完 tools/template.html 或 i18n.js 后必须重跑）：
     python tools/build_lang_pages.py
 """
 import html
@@ -28,22 +29,25 @@ import sys
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parent.parent
-SRC = ROOT / "index.html"
+SRC = ROOT / "tools" / "template.html"
 DICT_SRC = ROOT / "i18n.js"
 SITE = "https://waveatlas.top"
 
-# 目录名 -> (html lang, og:locale)
+# 语言清单：dict key -> (html lang, og:locale, URL 相对路径)
+# 顺序决定 sitemap 顺序；路径为 "/" 者是首页
 LANGS = {
-    "zh-TW": ("zh-TW", "zh_TW"),
-    "en": ("en", "en_US"),
-    "ja": ("ja", "ja_JP"),
-    "ko": ("ko", "ko_KR"),
+    "en":    ("en",    "en_US", "/"),
+    "zh-CN": ("zh-CN", "zh_CN", "/zh-CN/"),
+    "zh-TW": ("zh-TW", "zh_TW", "/zh-TW/"),
+    "ja":    ("ja",    "ja_JP", "/ja/"),
+    "ko":    ("ko",    "ko_KR", "/ko/"),
 }
-ROOT_LANG = "zh-CN"
+HOME_LANG = "en"          # 输出到站点根 / 的语言
+HOME_URL = SITE + "/"
 
 # 图片 alt 与色块 aria-label 是硬编码在 HTML 里的（不属 i18n 字典），
 # 但搜索引擎会索引 alt，读屏软件会读 aria-label，所以一并翻译。
-# 按图片文件名索引，键与 images/ 下的文件名去掉 .webp 后一致。
+# 简中母版本身即中文，无需翻译，故不含 zh-CN 条目。
 IMG_ALT = {
     "zh-TW": {
         "01-select-folder": "觀瀾音訊瀏覽器：選擇本機音訊資料夾的介面",
@@ -86,7 +90,6 @@ OG_IMAGE_ALT = {
     "ko": "WaveAtlas Audio Browser — 무료, 로컬, 단일 파일 오디오 파형 브라우저",
 }
 
-# 主题色色块的无障碍标签：中文原文 -> 各语言译文
 ARIA_DOTS = {
     "zh-TW": {"蓝色主题": "藍色主題", "紫色主题": "紫色主題", "绿色主题": "綠色主題",
               "黄色主题": "黃色主題", "橙色主题": "橙色主題", "红色主题": "紅色主題"},
@@ -154,10 +157,18 @@ def set_attr(doc: str, pattern: str, value: str) -> tuple:
     return new, n > 0
 
 
-def build(lang_dir: str, dicts: dict) -> str:
-    lang_code, og_locale = LANGS[lang_dir]
+def hreflang_block() -> str:
+    """生成五语互指 + x-default 的完整 <link> 区块（x-default 指向英文首页）。"""
+    rows = [f'<link rel="alternate" hreflang="{code}" href="{SITE}{path}">'
+            for code, (_, _, path) in LANGS.items()]
+    rows.append(f'<link rel="alternate" hreflang="x-default" href="{HOME_URL}">')
+    return "\n".join(rows)
+
+
+def build(lang_dir: str, dicts: dict) -> tuple:
+    lang_code, og_locale, url_path = LANGS[lang_dir]
     d = dicts[lang_dir]
-    page_url = f"{SITE}/{lang_dir}/"
+    page_url = SITE + url_path
     doc = SRC.read_text(encoding="utf-8")
     missing = []
 
@@ -172,7 +183,6 @@ def build(lang_dir: str, dicts: dict) -> str:
         doc, ok = set_inner(doc, "data-i18n", key, d[key], escape=True)
         if not ok:
             doc, ok = set_inner(doc, "data-i18n-html", key, d[key], escape=False)
-    # 校验：所有标记都应该被替换过（保留标记本身，供 JS 二次对齐）
 
     # --- 4. head 元信息 ---
     doc = re.sub(r"<title>.*?</title>",
@@ -194,63 +204,94 @@ def build(lang_dir: str, dicts: dict) -> str:
         if not ok:
             missing.append(pat[:40])
 
-    # --- 5. 结构化数据：url / inLanguage ---
+    # --- 5. hreflang：移除模板旧区块，注入当前映射 ---
+    doc = re.sub(r'\n?<link rel="alternate" hreflang="[^"]+" href="[^"]+">', '', doc)
+    block = hreflang_block()
+    doc = re.sub(r'(<link rel="canonical" href="[^"]+">)',
+                 lambda m: m.group(1) + "\n" + block, doc, count=1)
+
+    # --- 6. 结构化数据：url / inLanguage ---
     doc = re.sub(r'("url":\s*")[^"]*(")', lambda m: m.group(1) + page_url + m.group(2), doc, count=1)
     doc = re.sub(r'("inLanguage":\s*)\[[^\]]*\]',
                  lambda m: m.group(1) + '["' + lang_code + '"]', doc, count=1)
 
-    # --- 6. 资源路径改根绝对（子目录下否则全 404）---
+    # --- 7. 资源路径改根绝对（子目录下否则全 404）---
     doc = doc.replace('src="images/', 'src="/images/')
     doc = doc.replace('src="i18n.js"', 'src="/i18n.js"')
     doc = doc.replace('href="WaveAtlasAudioBrowser_v3.05.html"',
                       'href="/WaveAtlasAudioBrowser_v3.05.html"')
 
-    # --- 6.5 图片 alt / 分享卡 alt / 色块 aria-label 翻译 ---
-    for fname, alt in IMG_ALT[lang_dir].items():
-        doc = re.sub(
-            r'(src="/images/' + re.escape(fname) + r'\.webp"[^>]*?alt=")[^"]*(")',
-            lambda m, a=alt: m.group(1) + html.escape(a, quote=True) + m.group(2),
-            doc, count=1)
-    doc, _ = set_attr(doc, r'(<meta property="og:image:alt" content=")([^"]*)(")', OG_IMAGE_ALT[lang_dir])
-    for zh_label, translated in ARIA_DOTS[lang_dir].items():
-        doc = doc.replace(f'aria-label="{zh_label}"', f'aria-label="{html.escape(translated, quote=True)}"')
+    # --- 7.5 图片 alt / 分享卡 alt / 色块 aria-label 翻译（简中母版跳过）---
+    if lang_dir in IMG_ALT:
+        for fname, alt in IMG_ALT[lang_dir].items():
+            doc = re.sub(
+                r'(src="/images/' + re.escape(fname) + r'\.webp"[^>]*?alt=")[^"]*(")',
+                lambda m, a=alt: m.group(1) + html.escape(a, quote=True) + m.group(2),
+                doc, count=1)
+    if lang_dir in OG_IMAGE_ALT:
+        doc, _ = set_attr(doc, r'(<meta property="og:image:alt" content=")([^"]*)(")', OG_IMAGE_ALT[lang_dir])
+    if lang_dir in ARIA_DOTS:
+        for zh_label, translated in ARIA_DOTS[lang_dir].items():
+            doc = doc.replace(f'aria-label="{zh_label}"', f'aria-label="{html.escape(translated, quote=True)}"')
 
-    # --- 7. 语言切换器：高亮当前语言 ---
-    def fix_switch(m):
-        inner = re.sub(r'\sclass="active"', "", m.group(2))
-        inner = inner.replace(f'data-lang="{lang_code}"', f'data-lang="{lang_code}" class="active"')
-        return m.group(1) + inner + m.group(3)
+    # --- 8. 语言切换器：高亮当前语言（模板不带 active，脚本全权注入）---
+    doc = doc.replace(f'data-lang="{lang_dir}"', f'data-lang="{lang_dir}" class="active"', 1)
 
-    doc = re.sub(r'(<div class="lang-switch"[^>]*>)(.*?)(</div>)', fix_switch, doc, count=1, flags=re.S)
+    # --- 9. 提示条：仅英文首页保留（面向中文访客），其余语言页剥离 ---
+    if lang_dir != HOME_LANG:
+        doc = re.sub(r"<!-- LANG-HINT-START.*?<!-- LANG-HINT-END -->\s*", "", doc, flags=re.S)
+        doc = re.sub(r"/\* LANG-HINT-START.*?/\* LANG-HINT-END \*/\s*", "", doc, flags=re.S)
 
-    # --- 8. 剥离「非中文访客提示条」的 HTML 与配套 JS（子页已是对应语言，不需要）---
-    doc = re.sub(r"<!-- LANG-HINT-START.*?<!-- LANG-HINT-END -->\s*", "", doc, flags=re.S)
-    doc = re.sub(r"/\* LANG-HINT-START.*?/\* LANG-HINT-END \*/\s*", "", doc, flags=re.S)
-
-    # --- 9. 生成标记 + 写盘 ---
+    # --- 10. 生成标记 + 写盘 ---
     doc = doc.replace("<!DOCTYPE html>",
                       "<!DOCTYPE html>\n<!-- 由 tools/build_lang_pages.py 自动生成，请勿直接编辑；"
-                      "改动请改 index.html 或 i18n.js 后重跑脚本 -->", 1)
+                      "改动请改 tools/template.html 或 i18n.js 后重跑脚本 -->", 1)
 
-    out_dir = ROOT / lang_dir
-    out_dir.mkdir(exist_ok=True)
-    (out_dir / "index.html").write_text(doc, encoding="utf-8", newline="")
+    if lang_dir == HOME_LANG:
+        out = ROOT / "index.html"
+    else:
+        out = ROOT / lang_dir / "index.html"
+        out.parent.mkdir(exist_ok=True)
+    out.write_text(doc, encoding="utf-8", newline="")
     return lang_dir, len(doc), missing
 
 
+def write_legacy_redirect() -> str:
+    """旧 /en/ 地址生成自动跳转页，兼容已收录/已分享的老链接。"""
+    out_dir = ROOT / "en"
+    out_dir.mkdir(exist_ok=True)
+    page = f'''<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>WaveAtlas — English page has moved</title>
+<link rel="canonical" href="{HOME_URL}">
+<meta http-equiv="refresh" content="0; url=/">
+<style>body{{background:#0c0e14;color:#c9d1e0;font:15px/1.7 system-ui,sans-serif;text-align:center;padding:18vh 20px}}a{{color:#6ea3ff}}</style>
+</head>
+<body>
+<p>The English page has moved to the homepage.</p>
+<p>Redirecting to <a href="/">waveatlas.top</a> …</p>
+<script>location.replace('/');</script>
+</body>
+</html>
+'''
+    (out_dir / "index.html").write_text(page, encoding="utf-8", newline="")
+    return "en (redirect)"
+
+
 def write_sitemap() -> int:
-    """按同一份语言清单生成 sitemap.xml，含 xhtml:link 语言互指。
-    这样加/减语言时 sitemap 不会和页面脱节。"""
+    """按同一份语言清单生成 sitemap.xml，含 xhtml:link 语言互指。"""
     import datetime
     today = datetime.date.today().isoformat()
-    entries = [(ROOT_LANG, f"{SITE}/", "1.0")] + \
-              [(code, f"{SITE}/{folder}/", "0.9") for folder, (code, _) in LANGS.items()]
+    entries = [(code, SITE + path, "1.0" if path == "/" else "0.9")
+               for code, (_, _, path) in LANGS.items()]
 
     def alternates(indent="    "):
-        rows = [f'{indent}<xhtml:link rel="alternate" hreflang="{ROOT_LANG}" href="{SITE}/"/>']
-        for folder, (code, _) in LANGS.items():
-            rows.append(f'{indent}<xhtml:link rel="alternate" hreflang="{code}" href="{SITE}/{folder}/"/>')
-        rows.append(f'{indent}<xhtml:link rel="alternate" hreflang="x-default" href="{SITE}/"/>')
+        rows = [f'{indent}<xhtml:link rel="alternate" hreflang="{code}" href="{SITE}{path}"/>'
+                for code, (_, _, path) in LANGS.items()]
+        rows.append(f'{indent}<xhtml:link rel="alternate" hreflang="x-default" href="{HOME_URL}"/>')
         return "\n".join(rows)
 
     blocks = []
@@ -278,10 +319,11 @@ def main() -> int:
     for lang_dir in LANGS:
         name, size, missing = build(lang_dir, dicts)
         flag = "OK" if not missing else "警告"
-        print(f"[{flag}] {name:6s} index.html  {size:6d} 字节")
+        print(f"[{flag}] {name:6s} {'/' if lang_dir == HOME_LANG else '/' + lang_dir + '/':10s} {size:6d} 字节")
         if missing:
             ok = False
             print("     未匹配的 head 元素:", missing)
+    print(f"[OK] {write_legacy_redirect():14s} -> / （旧链接兼容）")
     n = write_sitemap()
     print(f"[OK] sitemap.xml  已生成 {n} 条 URL（含 hreflang 互指）")
     print("\n完成。提交前建议跑一遍 tools/check_lang_pages.py 做交叉校验。")
