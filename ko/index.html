@@ -329,7 +329,7 @@ var _hmt = _hmt || [];
         <a href="/ko/" hreflang="ko" data-lang="ko" class="active" title="한국어">한국어</a>
       </div>
     </div>
-    <a class="btn btn-primary btn-sm" href="/WaveAtlasAudioBrowser_v3.05.html" target="_blank" data-i18n="nav.try">온라인 체험</a>
+    <a class="btn btn-primary btn-sm" href="/WaveAtlasAudioBrowser_v3.05.html" target="_blank" data-i18n="nav.try" data-tip-key="nav.try.tip" title="다운로드 없이 브라우저에서 바로 사용">온라인 사용</a>
   </div>
 </nav>
 
@@ -341,8 +341,8 @@ var _hmt = _hmt || [];
     <h1><span data-i18n="hero.title">WaveAtlas Audio Browser</span><span class="en" data-i18n="hero.subtitle">관란 오디오 브라우저</span></h1>
     <p class="tagline" data-i18n-html="hero.tagline">폴더 속 오디오 파일을 파형으로 시각화합니다. 리듬과 음량 변화를 한눈에.<b style="display:block;margin-top:14px;font-size:25px;">파형 아무 곳이나 클릭하면 바로 재생, 자유롭게 이동합니다.</b></p>
     <div class="cta-row">
-      <a class="btn btn-primary" href="/WaveAtlasAudioBrowser_v3.05.html" target="_blank" data-i18n="hero.try">▶ 온라인 체험</a>
-      <a class="btn btn-ghost" href="/WaveAtlasAudioBrowser_v3.05.html" download="WaveAtlasAudioBrowser_v3.05.html" data-i18n="hero.dl">⬇ 오프라인 버전 다운로드</a>
+      <a class="btn btn-primary" href="/WaveAtlasAudioBrowser_v3.05.html" target="_blank" data-i18n="hero.try" data-tip-key="hero.try.tip" title="다운로드 없이 브라우저에서 바로 사용하고, 끝나면 닫으면 됩니다">▶ 지금 온라인으로 사용</a>
+      <a class="btn btn-ghost" href="/WaveAtlasAudioBrowser_v3.05.html" download="WaveAtlasAudioBrowser_v3.05.html" data-i18n="hero.dl" data-tip-key="hero.dl.tip" title="로컬에 저장해 오프라인에서도 사용 가능, 자주 쓸 때 적합">⬇ 오프라인 버전 다운로드</a>
     </div>
     <p class="hint" data-i18n="hero.hint">설치 불필요 · 단일 HTML 파일 · 약 95 KB · Chrome / Edge 86+ 바로 열기</p>
   </div>
@@ -527,14 +527,14 @@ var _hmt = _hmt || [];
       <h2 style="margin-bottom:4px;" data-i18n="dl.h2">지금 바로 가져가세요</h2>
       <p class="ver" data-i18n="dl.ver">WaveAtlas Audio Browser V3.05 · 단일 HTML 파일 · 약 95 KB</p>
       <div class="cta-row" style="display:flex;gap:16px;justify-content:center;flex-wrap:wrap;">
-        <a class="btn btn-primary" href="/WaveAtlasAudioBrowser_v3.05.html" download="WaveAtlasAudioBrowser_v3.05.html" data-i18n="dl.primary">⬇ 오프라인 버전 다운로드 (권장)</a>
-        <a class="btn btn-ghost" href="/WaveAtlasAudioBrowser_v3.05.html" target="_blank" data-i18n="dl.ghost">▶ 먼저 온라인으로 체험</a>
+        <a class="btn btn-primary" href="/WaveAtlasAudioBrowser_v3.05.html" target="_blank" data-i18n="dl.primary" data-tip-key="dl.primary.tip" title="다운로드 없이 브라우저에서 바로 사용하고, 끝나면 닫으면 됩니다">▶ 지금 온라인으로 사용</a>
+        <a class="btn btn-ghost" href="/WaveAtlasAudioBrowser_v3.05.html" download="WaveAtlasAudioBrowser_v3.05.html" data-i18n="dl.ghost" data-tip-key="dl.ghost.tip" title="로컬에 저장해 오프라인에서도 사용 가능, 자주 쓸 때 적합">⬇ 오프라인 버전 다운로드</a>
       </div>
       <p class="meta" data-i18n="dl.meta">MD5 체크섬 및 변경 로그 · 사용 설명 참조</p>
       <div class="dl-note">
         <b data-i18n="dl.ntitle">사용 방법 (3단계)</b>
         <ol>
-          <li data-i18n="dl.n1">위 버튼을 클릭해 HTML 파일을 다운로드합니다(오른쪽 버튼 → "링크를 다른 이름으로 저장"도 가능)</li>
+          <li data-i18n="dl.n1">오프라인으로 사용하려면 다운로드 버튼을 클릭해 HTML 파일을 저장합니다(오른쪽 버튼 → "링크를 다른 이름으로 저장"도 가능)</li>
           <li data-i18n="dl.n2">Chrome 또는 Edge에서 파일을 바로 엽니다(더블클릭)</li>
           <li data-i18n="dl.n3">왼쪽 위 「📂 폴더 선택」을 클릭해 권한을 허용하면 바로 탐색·재생할 수 있습니다</li>
         </ol>
@@ -680,6 +680,10 @@ document.getElementById('year').textContent = new Date().getFullYear();
     document.querySelectorAll('[data-i18n-html]').forEach(el => {
       const k = el.getAttribute('data-i18n-html');
       if (dict[k] !== undefined) el.innerHTML = dict[k];
+    });
+    document.querySelectorAll('[data-tip-key]').forEach(el => {
+      const k = el.getAttribute('data-tip-key');
+      if (dict[k] !== undefined) el.title = dict[k];
     });
     document.documentElement.lang = lang;
     document.title = dict['doc.title'];

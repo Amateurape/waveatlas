@@ -157,6 +157,13 @@ def set_attr(doc: str, pattern: str, value: str) -> tuple:
     return new, n > 0
 
 
+def set_title_attr(doc: str, key: str, value: str) -> tuple:
+    """给带 data-tip-key="key" 的元素把 title 属性写成译文（原生浮标，转义引号）。"""
+    pat = re.compile(r'(<[^>]*\bdata-tip-key="' + re.escape(key) + r'"[^>]*\btitle=")[^"]*(")')
+    new, n = pat.subn(lambda m: m.group(1) + html.escape(value, quote=True) + m.group(2), doc, count=1)
+    return new, n > 0
+
+
 def hreflang_block() -> str:
     """生成五语互指 + x-default 的完整 <link> 区块（x-default 指向英文首页）。"""
     rows = [f'<link rel="alternate" hreflang="{code}" href="{SITE}{path}">'
@@ -183,6 +190,8 @@ def build(lang_dir: str, dicts: dict) -> tuple:
         doc, ok = set_inner(doc, "data-i18n", key, d[key], escape=True)
         if not ok:
             doc, ok = set_inner(doc, "data-i18n-html", key, d[key], escape=False)
+        # 浮标：data-tip-key="key" 对应元素的 title 属性（非 tip 键不匹配，无副作用）
+        doc, _ = set_title_attr(doc, key, d[key])
 
     # --- 4. head 元信息 ---
     doc = re.sub(r"<title>.*?</title>",

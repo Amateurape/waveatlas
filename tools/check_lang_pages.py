@@ -134,6 +134,17 @@ def check_page(lang_code, path, dicts):
     if bad:
         errors.append(f"{tag} {len(bad)} 处译文未落盘: {bad[:5]}")
 
+    # 8b. 浮标文案是否落进 title 属性（data-tip-key 元素）
+    bad_tip = []
+    for key, val in target.items():
+        if not key.endswith(".tip"):
+            continue
+        m = re.search(r'data-tip-key="' + re.escape(key) + r'"[^>]*\btitle="([^"]*)"', doc)
+        if not m or html.unescape(m.group(1)).strip() != val.strip():
+            bad_tip.append(key)
+    if bad_tip:
+        errors.append(f"{tag} {len(bad_tip)} 处浮标未落盘: {bad_tip[:5]}")
+
     # 9. 是否残留中文（zh-CN 页本身是中文，不检查；其余语言页检查）
     #    英文首页含给中文访客的提示条（中文文案属预期），先剥掉提示条再统计
     if lang_code in ("en", "ja", "ko", "zh-TW"):
