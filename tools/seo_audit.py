@@ -107,6 +107,16 @@ def rec(sec: str, item: str, level: str, detail: str = "") -> None:
     results.append({"sec": sec, "item": item, "level": level, "detail": detail})
 
 
+def net_fail_detail(st: int | None, suffix: str = "") -> tuple[str, str]:
+    """把 fetch/alive 的失败分级，避免网络抖动被误报成站点故障：
+    - st is None（超时 / DNS / TLS）→ WARN，明确标注“非站点问题”
+    - 其它非 200 → FAIL（服务端确实给了错误状态）
+    """
+    if st is None:
+        return ("WARN", "探测失败（网络/超时/DNS，非站点问题），请稍后重试" + suffix)
+    return ("FAIL", f"HTTP {st}" + suffix)
+
+
 def png_size(data: bytes) -> tuple:
     """从 PNG 的 IHDR 读宽高。非 PNG 或损坏返回 (0, 0)。"""
     if len(data) < 24 or data[:8] != b"\x89PNG\r\n\x1a\n":
@@ -136,7 +146,8 @@ def audit_pages(base: str) -> dict:
         sep = "&" if "?" in url else "?"
         st, hd, body = fetch(f"{url}{sep}_audit={stamp}")
         if st != 200:
-            rec(sec, f"{path} 可访问", "FAIL", f"HTTP {st}" if st else "请求失败（网络/超时）")
+            lvl, detail = net_fail_detail(st)
+            rec(sec, f"{path} 可访问", lvl, detail)
             continue
         doc = body.decode("utf-8", "replace")
         docs[code] = doc
@@ -263,7 +274,8 @@ def audit_keyfiles(base: str) -> None:
     # robots.txt
     st, hd, body = fetch(f"{base}/robots.txt?_audit=1")
     if st != 200:
-        rec(sec, "robots.txt", "FAIL", f"HTTP {st}")
+        lvl, detail = net_fail_detail(st)
+        rec(sec, "robots.txt", lvl, detail)
     else:
         txt = body.decode("utf-8", "replace")
         sitemap_line = re.search(r"(?im)^\s*Sitemap:\s*(\S+)", txt)
@@ -279,7 +291,8 @@ def audit_keyfiles(base: str) -> None:
     # sitemap.xml
     st, hd, body = fetch(f"{base}/sitemap.xml?_audit=1")
     if st != 200:
-        rec(sec, "sitemap.xml", "FAIL", f"HTTP {st}")
+        lvl, detail = net_fail_detail(st)
+        rec(sec, "sitemap.xml", lvl, detail)
     else:
         import xml.etree.ElementTree as ET
         ns = {"s": "http://www.sitemaps.org/schemas/sitemap/0.9",
@@ -288,21 +301,24 @@ def audit_keyfiles(base: str) -> None:
             root = ET.fromstring(body)
             urls = root.findall("s:url", ns)
             locs = [(u.find("s:loc", ns).text or "").strip() for u in urls]
-            want = {(base + p) for _, p, _ in PAGES}
+            want = {(base + p) for _, p, _ in PAGES} | {f"{base}/app/"}  # 含在线版入口
             got = set(locs)
             missing = want - got
             extra = got - want
-            links = [len(u.findall("x:link", ns)) for u in urls]
+            # hreflang 只对语言页检查；/app/ 是单页工具（内部自带 7 语），无独立互指属正常
+            app_url = f"{base}/app/".rstrip("/")
+            lang_links = [len(u.findall("x:link", ns)) for u in urls
+                          if (u.find("s:loc", ns).text or "").rstrip("/") != app_url]
             if missing:
                 rec(sec, "sitemap.xml URL 集合", "FAIL", f"缺少 {sorted(missing)}")
             elif extra:
                 rec(sec, "sitemap.xml URL 集合", "WARN", f"多出 {sorted(extra)}")
             else:
                 rec(sec, "sitemap.xml URL 集合", "OK", f"{len(locs)} 个 URL 与页面一致")
-            if links and min(links) < len(EXPECT_HREFLANG):
-                rec(sec, "sitemap.xml 语言互指", "WARN", f"最少的只有 {min(links)} 条 hreflang")
+            if lang_links and min(lang_links) < len(EXPECT_HREFLANG):
+                rec(sec, "sitemap.xml 语言互指", "WARN", f"语言页中最少的只有 {min(lang_links)} 条 hreflang")
             else:
-                rec(sec, "sitemap.xml 语言互指", "OK", f"每条 {len(EXPECT_HREFLANG)} 条")
+                rec(sec, "sitemap.xml 语言互指", "OK", f"各语言页 {len(EXPECT_HREFLANG)} 条（/app/ 无互指属正常）")
         except ET.ParseError as e:
             rec(sec, "sitemap.xml 解析", "FAIL", f"XML 不合法：{e}")
 
@@ -315,7 +331,8 @@ def audit_keyfiles(base: str) -> None:
     for path, ctype, want_size in checks:
         st, ct, cl = alive(base + path)
         if st != 200:
-            rec(sec, path, "FAIL", f"HTTP {st}")
+            lvl, detail = net_fail_detail(st)
+            rec(sec, path, lvl, detail)
             continue
         if not ct.startswith(ctype):
             rec(sec, path, "WARN", f"Content-Type 异常：{ct or '(空)'}")
@@ -352,11 +369,16 @@ def audit_keyfiles(base: str) -> None:
         rec(sec, "HTTP→HTTPS 跳转", "WARN", f"无法检测：{str(e)[:60]}")
 
     st, hd, _ = alive(f"{base}/WaveAtlasAudioBrowser_v3.05.html")
-    rec(sec, "产品本体下载", "OK" if st == 200 else "FAIL", f"HTTP {st}")
+    if st == 200:
+        rec(sec, "产品本体下载", "OK", "HTTP 200")
+    else:
+        lvl, detail = net_fail_detail(st)
+        rec(sec, "产品本体下载", lvl, detail)
 
     st, hd, body = fetch(f"{base}/google35b4551d46ccfa66.html?_audit=1")
     if st != 200:
-        rec(sec, "GSC 验证文件", "FAIL", f"HTTP {st}（GSC 所有权可能失效）")
+        lvl, detail = net_fail_detail(st, "（无法据此判断 GSC 所有权）")
+        rec(sec, "GSC 验证文件", lvl, detail)
     else:
         txt = body.decode("utf-8", "replace")
         if "google-site-verification" in txt:
@@ -392,21 +414,31 @@ def audit_links(base: str, docs: dict) -> None:
                     continue
                 seen.add(u.split("#")[0] or "/")
 
+    probe_failed = []
     for u in sorted(seen):
         if u.startswith(("/images/", "/i18n.js", "/favicon", "/apple-touch", "/WaveAtlas")):
             st, _, _ = alive(base + u)
             if st != 200:
-                dead.append(f"{u} → HTTP {st}")
+                if st is None:
+                    probe_failed.append(u)          # 网络抖动，不算死链
+                else:
+                    dead.append(f"{u} → HTTP {st}")
 
     # 外部链接只统计不打扰（外站抖动不该算自家问题）
     st, _, _ = alive(base + "/i18n.js")
     if st != 200:
-        dead.append(f"/i18n.js → HTTP {st}")
+        if st is None:
+            probe_failed.append("/i18n.js")
+        else:
+            dead.append(f"/i18n.js → HTTP {st}")
 
     if dead:
         rec(sec, "内部链接/资源", "FAIL", f"{len(dead)} 处问题：" + "；".join(dead[:6]))
     else:
         rec(sec, "内部链接/资源", "OK", f"{len(seen)} 个站内目标全部 200")
+    if probe_failed:
+        rec(sec, "探测失败（网络抖动）", "WARN",
+            f"{len(probe_failed)} 个资源未能探测：" + "、".join(probe_failed[:6]) + "，非站点问题，请重试")
     if external:
         rec(sec, "外部链接", "OK", f"{len(external)} 个外站链接（未主动探测）")
 
@@ -417,7 +449,7 @@ def audit_tags(base: str, docs: dict) -> None:
     sec = "统计与验证"
     home = docs.get("en", "")
     if not home:
-        rec(sec, "首页统计代码", "FAIL", "首页抓取失败，跳过")
+        rec(sec, "首页统计代码", "WARN", "首页抓取失败，统计与验证项跳过（多为网络抖动/站点不可达），请稍后重试")
         return
 
     if BAIDU_HM in home:
@@ -433,12 +465,17 @@ def audit_tags(base: str, docs: dict) -> None:
     if "google-site-verification" in home:
         rec(sec, "GSC 验证", "OK", "meta 标签存在")
     else:
-        # 没有 meta 时看文件验证是否可用（本方案走的是文件验证）
+        # 本方案走文件验证，无 meta 属正常。只判断文件，且把网络抖动与真实失效分开。
         st, _, body = fetch(gsc_file_url(base))
-        if st == 200 and b"google-site-verification" in body:
-            rec(sec, "GSC 验证", "OK", "文件验证有效（无 meta，属正常）")
+        if st == 200:
+            if b"google-site-verification" in body:
+                rec(sec, "GSC 验证", "OK", "文件验证有效（无 meta，属正常）")
+            else:
+                rec(sec, "GSC 验证", "WARN", "验证文件返回 200 但内容不含 verification 串，请复核")
+        elif st is None:
+            rec(sec, "GSC 验证", "WARN", "验证文件探测失败（网络/超时），未能确认；无 meta 属文件验证方案正常现象，请重试")
         else:
-            rec(sec, "GSC 验证", "WARN", "meta 与验证文件均不可用，GSC 所有权可能失效")
+            rec(sec, "GSC 验证", "FAIL", f"验证文件 HTTP {st}，请复核 GSC 所有权")
 
     # 统计代码在子页是否也带上了（本方案子页共用 head，应一致）
     missing = [c for c, d in docs.items() if BAIDU_HM not in d and c != "en"]
