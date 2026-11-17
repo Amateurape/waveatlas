@@ -61,4 +61,10 @@
     <xhtml:link rel="alternate" hreflang="ko" href="https://waveatlas.top/ko/"/>
     <xhtml:link rel="alternate" hreflang="x-default" href="https://waveatlas.top/"/>
   </url>
+  <url>
+    <loc>https://waveatlas.top/app/</loc>
+    <lastmod>2026-11-17</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.8</priority>
+  </url>
 </urlset>

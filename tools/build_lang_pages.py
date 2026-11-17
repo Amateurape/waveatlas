@@ -314,12 +314,21 @@ def write_sitemap() -> int:
             f"{alternates()}\n"
             "  </url>")
 
+    # 在线版 /app/：单页工具内部自带 7 语切换，无独立 hreflang 版本
+    blocks.append(
+        "  <url>\n"
+        f"    <loc>{SITE}/app/</loc>\n"
+        f"    <lastmod>{today}</lastmod>\n"
+        "    <changefreq>monthly</changefreq>\n"
+        "    <priority>0.8</priority>\n"
+        "  </url>")
+
     xml = ('<?xml version="1.0" encoding="UTF-8"?>\n'
            '<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9"\n'
            '        xmlns:xhtml="http://www.w3.org/1999/xhtml">\n'
            + "\n".join(blocks) + "\n</urlset>\n")
     (ROOT / "sitemap.xml").write_text(xml, encoding="utf-8", newline="")
-    return len(entries)
+    return len(entries) + 1  # 含 /app/ 在线版
 
 
 def main() -> int:
