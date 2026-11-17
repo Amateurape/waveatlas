@@ -50,42 +50,6 @@ No installation. No internet needed. Nothing ever leaves your computer.
 
 无需安装，无需联网，音频数据一个字节都不会离开你的电脑。
 
-## 维护多语言落地页 · Maintaining the multilingual landing page
-
-落地页五种语言各占一个独立 URL（而不是靠 JS 切换），这样每个语种才能被搜索引擎单独收录：
-
-| 语言 | URL | 生成方式 |
-|---|---|---|
-| 简体中文 | `/` | `index.html`，**手工维护的母版** |
-| 繁体中文 | `/zh-TW/` | 构建脚本生成 |
-| 英语 | `/en/` | 构建脚本生成 |
-| 日语 | `/ja/` | 构建脚本生成 |
-| 韩语 | `/ko/` | 构建脚本生成 |
-
-`en/` `ja/` `ko/` `zh-TW/` 目录下的文件**不要直接编辑**，改动会在下次构建时被覆盖：
-
-```bash
-python tools/build_lang_pages.py    # 重新生成四个语言页 + sitemap.xml（含 hreflang 互指）
-python tools/check_lang_pages.py    # 交叉校验：lang / title / canonical / hreflang / 译文是否落盘 / 路径
-```
-
-改了 `index.html` 或 `i18n.js` 之后**必须重跑**，否则各语言页会停留在旧内容。
-要新增语言：在 `i18n.js` 补一套完整字典 → 在 `tools/build_lang_pages.py` 的 `LANGS` 里加一行 → 重跑。
-
-## SEO self-audit · 站点自检
-
-检查的是**线上真实返回**（不是本地文件），覆盖五语页的 lang / title / description / canonical /
-hreflang 互指 / OG / JSON-LD / h1，robots.txt 与 sitemap.xml，图标与分享卡尺寸，全站内链死链，
-统计与验证代码是否还在，以及页面与图片体积。
-
-```bash
-python tools/seo_audit.py                 # 检查线上，简报写入 _local/seo-audit/
-python tools/seo_audit.py --no-save       # 只打印，不落盘
-python tools/seo_audit.py --out <目录>    # 简报写到指定目录
-```
-
-退出码 `0` = 无失败项；`1` = 有 FAIL，需要处理。建议每次改完页面推上去后跑一遍，外加每月一次定期体检。
-
 ## Feedback · 反馈
 
 Found a bug or have a suggestion? Open an [Issue](../../issues).
