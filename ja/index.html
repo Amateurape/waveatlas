@@ -582,7 +582,7 @@ var _hmt = _hmt || [];
   </div>
 </footer>
 
-<script src="/i18n.js"></script>
+<script src="i18n.js?v=20261117b"></script>
 <script>
 /* Hero 动态波形背景 */
 (function () {
@@ -680,6 +680,9 @@ document.getElementById('year').textContent = new Date().getFullYear();
     });
     document.querySelectorAll('[data-i18n-html]').forEach(el => {
       const k = el.getAttribute('data-i18n-html');
+      /* 打赏按钮/页脚链接的图标在构建时已烘焙进 HTML；运行时若用旧字典覆盖会抹掉图标。
+         落地页语言切换是整页跳转，无需运行时改写这两处，故跳过。 */
+      if (k === 'sup.btn' || k === 'ft.support') return;
       if (dict[k] !== undefined) el.innerHTML = dict[k];
     });
     document.querySelectorAll('[data-tip-key]').forEach(el => {

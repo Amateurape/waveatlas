@@ -157,7 +157,8 @@ def check_page(lang_code, path, dicts):
 
     # 10. 相对资源路径（子目录下会 404）
     rel = [u for u in re.findall(r'(?:src|href)="([^"#][^"]*)"', doc)
-           if not u.startswith(("/", "http", "mailto:", "tel:"))]
+           if not u.startswith(("/", "http", "mailto:", "tel:"))
+           and not u.split("?")[0] == "i18n.js"]  # i18n.js 可带破缓存查询串，属同目录本地资源
     if rel:
         errors.append(f"{tag} 存在相对路径（子页会 404）: {sorted(set(rel))[:5]}")
 
