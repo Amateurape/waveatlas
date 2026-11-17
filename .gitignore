@@ -4,3 +4,7 @@ _local/
 # 调试临时图与本地备份原图
 images/_*.png
 images/01-select-folder-full.png
+
+# Python 编译缓存
+__pycache__/
+*.pyc
