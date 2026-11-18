@@ -56,6 +56,10 @@ Found a bug or have a suggestion? Open an [Issue](../../issues).
 
 发现问题或有功能建议？欢迎在 [Issues](../../issues) 留言。
 
+## License · 许可证
+
+Released under the [MIT License](LICENSE). · 基于 [MIT 许可证](LICENSE) 开源。
+
 ---
 
 © 2026 Amateurape · 「观水有术，必观其澜」
