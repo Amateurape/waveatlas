@@ -226,7 +226,8 @@ def build(lang_dir: str, dicts: dict) -> tuple:
 
     # --- 7. 资源路径改根绝对（子目录下否则全 404）---
     doc = doc.replace('src="images/', 'src="/images/')
-    doc = doc.replace('src="i18n.js"', 'src="/i18n.js"')
+    # i18n.js 引用带版本号查询串（?v=...），必须支持可选 query，否则子页仍用相对路径 → 404
+    doc = re.sub(r'src="i18n\.js(\?[^"]*)?"', r'src="/i18n.js\1"', doc, count=1)
     doc = doc.replace('href="WaveAtlasAudioBrowser_v3.05.html"',
                       'href="/WaveAtlasAudioBrowser_v3.05.html"')
 
