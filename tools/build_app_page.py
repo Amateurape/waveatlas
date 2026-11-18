@@ -52,8 +52,12 @@ SITE_BAR_STYLE = """<style>
     box-shadow: 0 2px 10px rgba(255,193,7,.35); }
   .sb-support:hover { background: #ffca28; color: #1a1a1a !important; transform: translateY(-1px); }
   .sb-support .sb-cup { width: 14px; height: 14px; flex: 0 0 14px; }
-  /* 让工具主体给站点条让出 46px，正好铺满视口 */
-  .app { height: calc(100vh - 46px) !important; }
+  /* 让工具主体给站点条让出 46px，正好铺满视口。
+     注意：手机浏览器 100vh 按地址栏收起后的最大视口计算，页面加载时地址栏
+     展开、实际可视高度更小，底部播放条会被浏览器 UI 压住；而工具本体
+     body overflow:hidden 无法滚动补救。故用 100dvh（动态视口）覆盖，
+     不支持 dvh 的旧浏览器自动回落到上一行 100vh（保持原状、不劣化）。 */
+  .app { height: calc(100vh - 46px) !important; height: calc(100dvh - 46px) !important; }
   @media (max-width: 560px) {
     .sb-links { gap: 10px; }
     .sb-cur, .sb-sep { display: none; }
@@ -148,14 +152,16 @@ EXTRA_STYLE = """<style>
     background: #fff4d6; color: #6b4a00; border-bottom: 1px solid #eed79a;
     text-align: center; line-height: 1.3; }
   body.has-compat .compat-bar { display: flex; }
-  body.has-compat .app { height: calc(100vh - 46px - 34px) !important; }
+  body.has-compat .app { height: calc(100vh - 46px - 34px) !important;
+    height: calc(100dvh - 46px - 34px) !important; }
   .compat-bar a { color: #6b4a00; font-weight: 700; text-decoration: underline; white-space: nowrap; }
   .compat-bar .cb-msg { min-width: 0; }
   .compat-bar .cb-close { flex: 0 0 auto; border: 0; background: transparent; color: #6b4a00;
     opacity: .55; cursor: pointer; font-size: 16px; line-height: 1; padding: 2px 4px; }
   .compat-bar .cb-close:hover { opacity: 1; }
   @media (max-width: 560px) { .compat-bar { font-size: 11.5px; height: 40px; flex: 0 0 40px; }
-    body.has-compat .app { height: calc(100vh - 46px - 40px) !important; } }
+    body.has-compat .app { height: calc(100vh - 46px - 40px) !important;
+      height: calc(100dvh - 46px - 40px) !important; } }
 
   /* ===== 侧栏「先看效果」示例音频按钮 ===== */
   .demo-btn { margin-top: 6px; width: 100%; padding: 7px 10px; border-radius: 7px;
