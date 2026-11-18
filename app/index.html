@@ -2796,6 +2796,10 @@
     'fr':      { 'sb.online':'En ligne', 'sb.home':'Retour accueil','sb.download':'Télécharger',  'sb.support':'Offrez-moi un café',  'sb.feedback':'Signaler un problème' },
     'de':      { 'sb.online':'Online',   'sb.home':'Zur Startseite','sb.download':'Herunterladen','sb.support':'Kauf mir einen Kaffee','sb.feedback':'Problem melden' }
   };
+  // 打赏链接分流：简中（zh-Hans）走爱发电（国内微信/支付宝），其余 6 语保持 Ko-fi。
+  // 与落地页简中页策略一致；文案/图标不动，只换跳转目标。
+  var SUPPORT_HREF = { 'zh-Hans': 'https://afdian.com/a/amateurape' };
+  var DEFAULT_SUPPORT_HREF = 'https://ko-fi.com/amateurape';
   function applySiteBar() {
     var sel = document.getElementById('langSelect');
     var code = sel ? sel.value : '';
@@ -2810,6 +2814,9 @@
       else el.textContent = pack[k];
       el.setAttribute('title', pack[k]);
     });
+    // 打赏链接随语言切换：简中→爱发电，其他→Ko-fi
+    var supportBtn = document.querySelector('.sb-support');
+    if (supportBtn) supportBtn.href = SUPPORT_HREF[code] || DEFAULT_SUPPORT_HREF;
   }
   applySiteBar();
   var sel = document.getElementById('langSelect');

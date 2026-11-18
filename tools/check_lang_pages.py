@@ -15,6 +15,10 @@ import re
 import sys
 from pathlib import Path
 
+# 复用构建脚本的打赏链接分流映射（单一数据源，避免两边漂移）。
+# 简中页构建时会把 ko-fi 换成爱发电，校验时须对预期译文做同样归一化。
+from build_lang_pages import DEFAULT_SUPPORT_LINK, SUPPORT_LINKS
+
 ROOT = Path(__file__).resolve().parent.parent
 SITE = "https://waveatlas.top"
 HOME_LANG = "en"
@@ -119,6 +123,13 @@ def check_page(lang_code, path, dicts):
 
     # 8. 译文是否真的落进 HTML（逐元素比对）
     bad = []
+    # 简中页的打赏链接在构建时被换成了爱发电，比对本页译文前先做同样替换，
+    # 否则 ft.support 会因链接不一致被误报"未落盘"。
+    target = dict(target)
+    if lang_code in SUPPORT_LINKS:
+        for k, v in target.items():
+            if isinstance(v, str):
+                target[k] = v.replace(DEFAULT_SUPPORT_LINK, SUPPORT_LINKS[lang_code])
     for key, val in target.items():
         sp = span(doc, "data-i18n", key)
         is_html_key = False

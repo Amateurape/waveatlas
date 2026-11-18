@@ -45,6 +45,13 @@ LANGS = {
 HOME_LANG = "en"          # 输出到站点根 / 的语言
 HOME_URL = SITE + "/"
 
+# 打赏链接：默认 Ko-fi（海外受众，PayPal），简中页走爱发电（国内微信/支付宝）。
+# 与在线版 /app/ 站点条的 zh-Hans 判断保持同一分流策略。
+DEFAULT_SUPPORT_LINK = "https://ko-fi.com/amateurape"
+SUPPORT_LINKS = {
+    "zh-CN": "https://afdian.com/a/amateurape",
+}
+
 # 图片 alt 与色块 aria-label 是硬编码在 HTML 里的（不属 i18n 字典），
 # 但搜索引擎会索引 alt，读屏软件会读 aria-label，所以一并翻译。
 # 简中母版本身即中文，无需翻译，故不含 zh-CN 条目。
@@ -251,6 +258,12 @@ def build(lang_dir: str, dicts: dict) -> tuple:
     if lang_dir != HOME_LANG:
         doc = re.sub(r"<!-- LANG-HINT-START.*?<!-- LANG-HINT-END -->\s*", "", doc, flags=re.S)
         doc = re.sub(r"/\* LANG-HINT-START.*?/\* LANG-HINT-END \*/\s*", "", doc, flags=re.S)
+
+    # --- 9.5 打赏链接分流：仅简中页换爱发电，其余语言保持 Ko-fi ---
+    # 覆盖两处入口：母版大按钮 href + 字典烘焙进来的页脚 href。
+    # 文案/图标不动（"请我喝杯咖啡"通俗易懂），只换跳转目标。
+    if lang_dir in SUPPORT_LINKS:
+        doc = doc.replace(DEFAULT_SUPPORT_LINK, SUPPORT_LINKS[lang_dir])
 
     # --- 10. 生成标记 + 写盘 ---
     doc = doc.replace("<!DOCTYPE html>",
